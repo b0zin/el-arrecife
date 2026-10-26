@@ -880,6 +880,50 @@ html.gfx-nowater .bg-water::before{ }
 })();
 
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  .acct-tabs{ display:flex; gap:8px; margin:6px 0 10px; }
+  .acct-tabs button{ flex:1; padding:8px 4px; background:var(--panel); color:var(--ink); border:1px solid var(--panel-line); border-radius:10px; font-family:var(--font-body); cursor:pointer; }
+  .acct-tabs button.on{ background:var(--coral); color:#2A0E06; border-color:var(--coral); font-weight:700; }
+  .acct-in{ display:block; width:100%; box-sizing:border-box; margin:0 0 8px; padding:10px; background:var(--bg-deep); color:var(--ink); border:1px solid var(--panel-line); border-radius:10px; font-family:var(--font-body); font-size:14px; }
+  .acct-msg{ min-height:18px; color:var(--danger); font-size:9px; line-height:1.6; margin:2px 0 4px; }
+  .acct-msg.ok{ color:var(--move); }
+  .acct-who{ text-align:center; font-family:var(--font-display); font-size:14px; color:var(--gold); margin:10px 0 6px; word-break:break-all; }
+  #chat-fab{ display:none; position:fixed; right:12px; bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:35; width:48px; height:48px; border-radius:50%; border:1px solid var(--panel-line); background:var(--panel); color:var(--ink); font-size:22px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+  body.online #chat-fab{ display:block; }
+  #chat-fab .cbadge{ position:absolute; top:-4px; right:-4px; min-width:20px; height:20px; padding:0 5px; box-sizing:border-box; border-radius:10px; background:var(--coral); color:#2A0E06; font:700 12px/20px var(--font-body); text-align:center; display:none; }
+  #chat-panel{ display:none; position:fixed; right:12px; bottom:calc(68px + env(safe-area-inset-bottom,0px)); z-index:36; width:min(340px,calc(100vw - 24px)); height:min(55vh,380px); flex-direction:column; background:var(--panel); border:1px solid var(--panel-line); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.45); overflow:hidden; }
+  body.online #chat-panel.open{ display:flex; }
+  #chat-panel .chead{ display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-bottom:1px solid var(--panel-line); font-family:var(--font-display); font-size:11px; color:var(--ink); }
+  #chat-panel .chead button{ background:none; border:none; color:var(--ink-dim); font-size:16px; cursor:pointer; }
+  #chat-log{ flex:1; overflow-y:auto; padding:8px 10px; display:flex; flex-direction:column; gap:6px; }
+  #chat-log .cm{ font-family:var(--font-body); font-size:14px; line-height:1.35; color:var(--ink); word-break:break-word; overflow-wrap:anywhere; }
+  #chat-log .cm.me .ct{ color:var(--gold); }
+  #chat-log .cm.sys{ color:var(--ink-dim); font-size:12px; text-align:center; }
+  #chat-log .cn{ display:inline-block; margin-right:6px; padding:1px 7px; border-radius:9px; font-size:12px; font-weight:700; border:1px solid var(--panel-line); }
+  #chat-log .cn.white{ background:var(--white-owner); color:#0B2036; }
+  #chat-log .cn.black{ background:var(--black-owner); color:#EAF3F6; }
+  #chat-panel .cfoot{ display:flex; gap:6px; padding:8px; border-top:1px solid var(--panel-line); }
+  #chat-in{ flex:1; min-width:0; padding:9px; background:var(--bg-deep); color:var(--ink); border:1px solid var(--panel-line); border-radius:10px; font-family:var(--font-body); font-size:14px; }
+  #acct-box{ max-height:90vh; overflow-y:auto; }
+  .pf-head{ display:flex; align-items:center; gap:12px; margin:4px 0 12px; }
+  .pf-av{ width:64px; height:64px; flex:none; border-radius:50%; background:var(--bg-deep); border:2px solid var(--panel-line); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pf-av img{ max-width:78%; max-height:78%; object-fit:contain; }
+  .pf-name{ font-family:var(--font-display); font-size:14px; color:var(--gold); word-break:break-all; }
+  .pf-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px; }
+  .pf-stat{ background:var(--bg-deep); border:1px solid var(--panel-line); border-radius:10px; padding:8px 4px; text-align:center; }
+  .pf-stat b{ display:block; font-family:var(--font-display); font-size:16px; color:var(--ink); margin-bottom:4px; }
+  .pf-stat span{ font-size:9px; color:var(--ink-dim); }
+  .pf-sec{ margin-top:12px; }
+  .pf-lbl{ font-size:9px; color:var(--ink-dim); margin-bottom:6px; }
+  .pf-fav{ display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--bg-deep); border:1px solid var(--panel-line); border-radius:10px; font-family:var(--font-body); font-size:14px; color:var(--ink); }
+  .pf-fav img{ width:40px; height:auto; flex:none; }
+  .pf-fav b{ display:block; }
+  .pf-fav span{ color:var(--ink-dim); font-size:12px; }
+  .pf-bio-t{ font-family:var(--font-body); font-size:14px; line-height:1.4; color:var(--ink); word-break:break-word; overflow-wrap:anywhere; }
+  .pf-count{ text-align:right; font-size:9px; color:var(--ink-dim); margin:-4px 0 8px; }
+  textarea.acct-in{ resize:none; min-height:64px; }
+</style>
 </head>
 <body>
 <div class="g-sea"></div>
@@ -972,9 +1016,41 @@ html.gfx-nowater .bg-water::before{ }
       <button class="mbtn" id="m-new" data-a="new"><img data-s="tortuga_white" alt="">Nueva partida<span class="arrow">▶</span></button>
       <button class="mbtn" data-a="help"><img data-s="pulpo_black" alt="">¿Cómo se juega?<span class="arrow">▶</span></button>
       <button class="mbtn" data-a="credits"><img data-s="caballito_black" alt="">Créditos<span class="arrow">▶</span></button>
+      <button class="mbtn" id="m-acct"><img data-s="medusa_black" alt=""><span><span>Cuenta</span><small id="m-acct-sub">Invitado</small></span><span class="arrow">▶</span></button>
     </nav>
   </div>
 </div>
+<button id="chat-fab" type="button" aria-label="Abrir chat">💬<span class="cbadge" id="chat-badge">0</span></button>
+<div id="chat-panel" role="dialog" aria-label="Chat con tu rival">
+  <div class="chead"><span>Chat</span><button id="chat-close" type="button" aria-label="Cerrar chat">✕</button></div>
+  <div id="chat-log" role="log" aria-live="polite"></div>
+  <div class="cfoot"><input id="chat-in" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button class="btn-primary" id="chat-send" type="button">Enviar</button></div>
+</div>
+<div class="modal-backdrop" id="acct-modal"><div class="modal" id="acct-box">
+  <h2>Cuenta</h2>
+  <div id="acct-out">
+    <p>Entra para guardar tu perfil y jugar con tu nombre. También puedes jugar como invitado, sin cuenta.</p>
+    <div class="acct-tabs"><button id="acct-t-login" class="on" type="button">Entrar</button><button id="acct-t-reg" type="button">Crear cuenta</button></div>
+    <input class="acct-in" id="acct-user" placeholder="Nombre de usuario" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="16">
+    <input class="acct-in" id="acct-pass" type="password" placeholder="Contraseña (mín. 8)" autocomplete="current-password">
+    <input class="acct-in" id="acct-pass2" type="password" placeholder="Repite la contraseña" autocomplete="new-password" style="display:none">
+    <div class="acct-msg" id="acct-msg"></div>
+    <div class="modal-actions"><button class="btn-ghost" id="acct-close1" type="button">Invitado</button><button class="btn-primary" id="acct-go" type="button">Entrar</button></div>
+  </div>
+  <div id="acct-in" style="display:none">
+    <div id="acct-card"></div>
+    <div class="acct-msg" id="acct-msg2"></div>
+    <div class="modal-actions"><button class="btn-ghost" id="acct-logout" type="button">Cerrar sesión</button><button class="btn-primary" id="acct-close2" type="button">Listo</button></div>
+    <div class="modal-actions"><button class="btn-ghost" id="acct-del" type="button" style="color:var(--danger)">Borrar mi cuenta</button></div>
+  </div>
+</div></div>
+<div id="pf-bank" hidden><img id="pf-sp-tortuga" data-s="tortuga_white" alt=""><img id="pf-sp-mantarraya" data-s="mantarraya_white" alt=""><img id="pf-sp-langosta" data-s="langosta_white" alt=""><img id="pf-sp-cangrejo" data-s="cangrejo_white" alt=""><img id="pf-sp-caballito" data-s="caballito_white" alt=""><img id="pf-sp-medusa" data-s="medusa_white" alt=""><img id="pf-sp-tiburon" data-s="tiburon_white" alt=""><img id="pf-sp-pulpo" data-s="pulpo_white" alt=""></div>
+<div class="modal-backdrop" id="prof-modal"><div class="modal">
+  <h2>Perfil</h2>
+  <div id="prof-card"></div>
+  <div class="acct-msg" id="prof-msg"></div>
+  <div class="modal-actions"><button class="btn-primary" id="prof-close" type="button">Cerrar</button></div>
+</div></div>
 <div class="modal-backdrop" id="credits-modal"><div class="modal credits">
   <h2>Créditos</h2>
   <p class="pair"><img data-s="tiburon_white" alt=""><img data-s="tiburon_black" alt=""></p>
@@ -1546,6 +1622,12 @@ html.gfx-nowater .bg-water::before{ }
     }
   }
 
+  let statsDone = false;                              // un solo informe de resultado por partida online
+  function statsReport(mover, actor, placed){
+    if(!onl || statsDone || !state.gameOver) return; statsDone = true;
+    const go = state.gameOver;
+    try{ if(window.ArrecifeStats) window.ArrecifeStats.record({ type:go.type, winner:go.winner||null, me:onl.color, mover, species:(actor&&actor.species)||(placed&&placed.species)||null, resigned:!!go.resigned }); }catch(e){}
+  }
   function finishTurn(splashAtKey){
     const wasGameOver = !!state.gameOver;
     const netMover = state.currentPlayer, netInfo = lastMoveInfo;
@@ -1564,7 +1646,7 @@ html.gfx-nowater .bg-water::before{ }
     save();
     render();
     if(placed) placeDropFx(placed.to, placed.species, placed.owner); else if(splashAtKey) spawnSplash(splashAtKey);
-    if(state.gameOver && !wasGameOver){ victoryActor = actor; const go = ()=>{ if(state.gameOver){ triggerVictoryVfx(); vScheduleSummary(actor); } }; if(placed) setTimeout(go,720); else go(); }
+    if(state.gameOver && !wasGameOver){ statsReport(netMover, actor, placed); victoryActor = actor; const go = ()=>{ if(state.gameOver){ triggerVictoryVfx(); vScheduleSummary(actor); } }; if(placed) setTimeout(go,720); else go(); }
     aiKick();
     if(onl && bridge.onTurn) bridge.onTurn({ mover:netMover, info:netInfo, n:state.turnNumber-1, over:!!state.gameOver });
   }
@@ -3712,7 +3794,7 @@ html.gfx-nowater .bg-water::before{ }
   Object.assign(bridge, {
     active(){ return !!onl; },
     color(){ return onl ? onl.color : null; },
-    enter(color){ onl = { color, locked:true }; document.body.classList.add("online"); netClear(); render(); },
+    enter(color){ statsDone = false; onl = { color, locked:true }; document.body.classList.add("online"); netClear(); render(); },
     leave(){
       if(!onl) return; onl = null; document.body.classList.remove("online");
       isAnimating = false; animatingFromKey = null; lastMoveInfo = null; lastActor = null; victoryActor = null;
@@ -3725,7 +3807,7 @@ html.gfx-nowater .bg-water::before{ }
       if(!isAnimating) render();
     },
     newGame(){                                                      // partida limpia (inicio, reinicio o revancha)
-      aiCfg = null; aiBusy = false; isAnimating = false; animatingFromKey = null;
+      aiCfg = null; aiBusy = false; isAnimating = false; animatingFromKey = null; statsDone = false;
       state = freshState(); turnStartSnap = snapshot(); lastMoveInfo = null; lastActor = null; victoryActor = null;
       vHideSummary(); save(); render(); introTrays(450);
     },
@@ -3757,7 +3839,7 @@ html.gfx-nowater .bg-water::before{ }
     pass(){ if(!onl || state.gameOver) return false; netClear(); lastMoveInfo = null; lastActor = null; finishTurn(); return true; },
     resign(winner){
       if(state.gameOver) return false;
-      state.gameOver = { type:"win", winner, resigned:true }; netClear(); victoryActor = null; save(); render(); vScheduleSummary(null); return true;
+      state.gameOver = { type:"win", winner, resigned:true }; statsReport(null,null,null); netClear(); victoryActor = null; save(); render(); vScheduleSummary(null); return true;
     },
     // Carga un estado completo recibido en un sync (ya validado por ArrecifeNet.validate). false si hay una animación en curso.
     load(g, o){
@@ -3765,7 +3847,7 @@ html.gfx-nowater .bg-water::before{ }
       const { view } = state;
       state = Object.assign({ selected:null, selectedCell:null, moveSubMode:null, ai:null, moveLog:[] }, JSON.parse(JSON.stringify(g)), { history:[], view });
       turnStartSnap = snapshot(); hoverKey = null; lastMoveInfo = null; lastActor = null; victoryActor = null;
-      vHideSummary(); save(); render();
+      vHideSummary(); if(!state.gameOver) statsDone = false; save(); render();
       if(o && o.intro) introTrays(450);
       if(state.gameOver) vScheduleSummary(null);
       return true;
@@ -4252,12 +4334,18 @@ html.gfx-nowater .bg-water::before{ }
         if (m.sid != null) { if (typeof m.sid !== "string" || !/^[a-z0-9]{6,32}$/.test(m.sid)) return null; o.sid = m.sid; }
         if (m.n != null) { if (!isInt(m.n, 1, 5000)) return null; o.n = m.n; }
         if (m.h != null) { if (!isHash(m.h)) return null; o.h = m.h; }
+        if (m.u != null) { if (typeof m.u !== "string" || !/^[A-Za-z0-9_]{3,16}$/.test(m.u)) return null; o.u = m.u; }
         if (m.la != null) {
           const a = vAction(m.la.a);
           if (!a || !isInt(m.la.n, 1, 5000) || !isHash(m.la.h)) return null;
           o.la = { n: m.la.n, a, h: m.la.h };
         }
         return o;
+      }
+      case "chat": {
+        if (typeof m.x !== "string") return null;
+        const x = m.x.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, " ").trim().slice(0, 200).trim();
+        return x ? { v: PROTO_V, t: "chat", x } : null;
       }
       case "act": {
         const a = vAction(m.a);
@@ -4425,6 +4513,7 @@ html.gfx-nowater .bg-water::before{ }
   function leave(reason) {
     const had = !!S || !!readMeta();
     closeSession(reason === undefined ? "quit" : reason);
+    try { if (window.ArrecifeChat) window.ArrecifeChat.reset(); } catch (e) {}
     clearMeta(); banner(null); closeModal(); setIndicator("off");
     if (B.active()) B.leave();
     resetLobby();
@@ -4491,6 +4580,7 @@ html.gfx-nowater .bg-water::before{ }
 
   function sendHello() {
     const m = { t: "hello", role: S.role, color: S.color };
+    try { const u = window.ArrecifeAcct && window.ArrecifeAcct.username(); if (u) m.u = u; } catch (e) {}
     if (S.started) { const g = B.game(); m.n = g.turnNumber; m.h = N.hashGame(g); }
     if (S.role === "guest") { m.sid = S.sid; if (S.started && S.lastAct) m.la = S.lastAct; }
     send(m);
@@ -4519,15 +4609,32 @@ html.gfx-nowater .bg-water::before{ }
       case "ping": send({ t: "pong", ts: m.ts }); break;
       case "pong": break;
       case "act": onAct(m); break;
+      case "chat": onChat(m); break;
       case "sync": onSync(m); break;
       case "resign": onResign(); break;
       case "rematch": onRematch(m); break;
       case "bye": onBye(m); break;
     }
   }
+  function onChat(m) {
+    if (!S) return;
+    const t = now(); S.chatRx = (S.chatRx || []).filter(x => t - x < 10000);
+    if (S.chatRx.length >= 6) return;                 // anti-spam: máx. 6 mensajes cada 10 s
+    S.chatRx.push(t);
+    try { if (window.ArrecifeChat) window.ArrecifeChat.receive(m.x, other(S.color || "white"), S.rivalName || null); } catch (e) {}
+  }
+  window.ArrecifeNetChat = {
+    send(x) {
+      if (!S || S.ended) return null;
+      if (!send({ t: "chat", x })) return null;
+      let me = null; try { me = window.ArrecifeAcct && window.ArrecifeAcct.username(); } catch (e) {}
+      return { color: S.color || "white", name: me || null };
+    }
+  };
   function rejectConn(conn, reason) { S.link.sendTo(conn, { v: N.PROTO_V, t: "bye", reason }); setTimeout(() => S && S.link.reject(conn), 120); }
 
   function onHello(m, meta) {
+    if (m.u && S.rivalName !== m.u) { S.rivalName = m.u; toast("Tu rival es " + m.u); }
     if (S.role === "host") {
       if (m.role !== "guest" || !m.sid) return;
       if (S.guestSid && m.sid !== S.guestSid) { rejectConn(meta.conn, "full"); return; }   // la partida ya tiene su invitado
@@ -4932,6 +5039,255 @@ html.gfx-nowater .bg-water::before{ }
   (function loop(){ if(scr.classList.contains("show") && !scr.classList.contains("leaving") && !calm && !document.hidden && GFX.bubOK()) spawnPiece(); setTimeout(loop, rnd(2500,5000)); })();
   window.ArrecifeMenu = { show, hide };
   show();
+})();
+</script>
+<script>
+(function(){
+  var URL_ = "https://vgtoukpnwjdzjkhyxemi.supabase.co", KEY = "sb_publishable_2gCLTf5RY-fvAJ84Louheg_2jH3NJ5F";
+  var DOM = "@arrecife.example.com", RX = /^[A-Za-z0-9_]{3,16}$/, Q_KEY = "arrecife_stats_q";
+  var SP = ["tortuga","mantarraya","langosta","cangrejo","caballito","medusa","tiburon","pulpo"];
+  var VN = { tortuga:"Tortuga Reina", mantarraya:"Mantarraya", langosta:"Langosta", cangrejo:"Cangrejo", caballito:"Caballito de Mar", medusa:"Medusa", tiburon:"Tiburón", pulpo:"Pulpo" };
+  var $ = function(id){ return document.getElementById(id); };
+  var sb = null, name = null, uid = null, mode = "login", busy = false, flushing = false;
+  try { if (window.supabase) sb = window.supabase.createClient(URL_, KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch (e) { sb = null; }
+
+  window.ArrecifeAcct = { username: function(){ return name; } };
+
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function num(v){ v = Number(v); return isFinite(v) && v > 0 ? Math.floor(v) : 0; }
+  function spriteSrc(sp){ var i = $("pf-sp-" + sp); return i ? i.src : ""; }
+  function isOpen(){ return $("acct-modal").classList.contains("show"); }
+
+  function paintMenu(){ $("m-acct-sub").textContent = name ? "@" + name : (sb ? "Invitado" : "Sin conexión"); }
+  function paintModal(){
+    var inn = !!name;
+    $("acct-out").style.display = inn ? "none" : ""; $("acct-in").style.display = inn ? "" : "none";
+    if (!inn) $("acct-card").textContent = "";
+  }
+  function msg(t, ok){ var a = $(name ? "acct-msg2" : "acct-msg"); a.textContent = t || ""; a.className = "acct-msg" + (ok ? " ok" : ""); }
+  function setMode(m){
+    mode = m;
+    $("acct-t-login").classList.toggle("on", m === "login"); $("acct-t-reg").classList.toggle("on", m === "reg");
+    $("acct-pass2").style.display = m === "reg" ? "" : "none";
+    $("acct-pass").autocomplete = m === "reg" ? "new-password" : "current-password";
+    $("acct-go").textContent = m === "reg" ? "Crear cuenta" : "Entrar";
+    msg("");
+  }
+  function open(){ paintModal(); msg(""); $("acct-modal").classList.add("show"); if (name) loadOwn(); }
+  function close(){ $("acct-modal").classList.remove("show"); }
+
+  /* ---------- Tarjeta de perfil (propia editable / ajena de solo lectura) ---------- */
+  function favOf(d){
+    var by = (d.stats && d.stats.by_species) || {}, best = null, n = 0;
+    SP.forEach(function(k){ var c = num(by[k]); if (c > n) { n = c; best = k; } });
+    return best ? { k: best, n: n } : null;
+  }
+  function buildCard(box, d, editable){
+    box.textContent = "";
+    var st = d.stats || {}, w = num(st.wins), l = num(st.losses), dr = num(st.draws);
+    var head = el("div", "pf-head"), av = el("div", "pf-av"), im = document.createElement("img");
+    im.alt = ""; im.src = spriteSrc("tortuga"); av.appendChild(im);
+    head.appendChild(av); head.appendChild(el("div", "pf-name", "@" + d.username)); box.appendChild(head);
+
+    var g = el("div", "pf-stats");
+    [["Victorias", w], ["Derrotas", l], ["Winrate", (w + l) ? Math.round(w * 100 / (w + l)) + "%" : "—"]].forEach(function(x){
+      var c = el("div", "pf-stat"); c.appendChild(el("b", null, String(x[1]))); c.appendChild(el("span", null, x[0])); g.appendChild(c);
+    });
+    box.appendChild(g);
+    if (dr) box.appendChild(el("div", "pf-lbl", "Empates: " + dr));
+
+    var f = el("div", "pf-sec"); f.appendChild(el("div", "pf-lbl", "Pieza favorita"));
+    var fv = favOf(d), row = el("div", "pf-fav");
+    if (fv) {
+      var fi = document.createElement("img"); fi.alt = ""; fi.src = spriteSrc(fv.k); row.appendChild(fi);
+      var tx = el("div"); tx.appendChild(el("b", null, VN[fv.k] || fv.k)); tx.appendChild(el("span", null, fv.n + (fv.n === 1 ? " victoria" : " victorias"))); row.appendChild(tx);
+    } else row.appendChild(el("span", null, "Aún sin victorias."));
+    f.appendChild(row); box.appendChild(f);
+
+    var b = el("div", "pf-sec"); b.appendChild(el("div", "pf-lbl", "Descripción"));
+    if (editable) {
+      var ta = el("textarea", "acct-in"); ta.maxLength = 150; ta.rows = 3; ta.placeholder = "Cuéntales algo a los demás jugadores…"; ta.value = d.bio || "";
+      var cnt = el("div", "pf-count"), btn = el("button", "btn-primary", "Guardar descripción"); btn.type = "button"; btn.style.width = "100%";
+      var upd = function(){ cnt.textContent = ta.value.length + "/150"; };
+      ta.addEventListener("input", upd); upd();
+      btn.addEventListener("click", function(){ saveBio(ta, btn, upd); });
+      b.appendChild(ta); b.appendChild(cnt); b.appendChild(btn);
+    } else b.appendChild(el("div", "pf-bio-t", d.bio || "Sin descripción."));
+    box.appendChild(b);
+  }
+  async function saveBio(ta, btn, upd){
+    if (!sb || !uid) return;
+    var v = ta.value.replace(/\s+/g, " ").trim().slice(0, 150);
+    btn.disabled = true; msg("Guardando…", true);
+    try {
+      var r = await sb.from("profiles").update({ bio: v || null }).eq("id", uid);
+      if (r.error) msg("No se pudo guardar la descripción."); else { ta.value = v; upd(); msg("Descripción guardada.", true); }
+    } catch (e) { msg(friendly(e)); }
+    btn.disabled = false;
+  }
+  async function loadOwn(){
+    if (!sb || !uid || !name) return;
+    var box = $("acct-card"); if (!box.firstChild) box.textContent = "Cargando…";
+    try {
+      var r = await sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+      if (r.error) { box.textContent = ""; msg("No se pudo cargar el perfil."); return; }
+      var d = r.data || {}; d.username = d.username || name; buildCard(box, d, true);
+    } catch (e) { box.textContent = ""; msg(friendly(e)); }
+  }
+  async function view(u){
+    if (!sb || !RX.test(u || "")) return;
+    var box = $("prof-card"), m = $("prof-msg"); box.textContent = "Cargando…"; m.textContent = ""; $("prof-modal").classList.add("show");
+    try {
+      var r = await sb.from("profiles").select("*").eq("username", u).maybeSingle();
+      if (r.error || !r.data) { box.textContent = ""; m.textContent = r.error ? "No se pudo cargar el perfil." : "Este jugador no tiene perfil público."; return; }
+      buildCard(box, r.data, false);
+    } catch (e) { box.textContent = ""; m.textContent = "No se pudo cargar el perfil."; }
+  }
+  window.ArrecifeProfile = { view: view };
+
+  /* ---------- Estadísticas (cola local + RPC record_result) ---------- */
+  function qGet(){ try { var a = JSON.parse(localStorage.getItem(Q_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function qSet(a){ try { localStorage.setItem(Q_KEY, JSON.stringify(a.slice(-30))); } catch (e) {} }
+  async function flush(){
+    if (flushing || !sb || !uid) return; flushing = true;
+    try {
+      for (;;) {
+        var q = qGet(), i = -1;
+        for (var k = 0; k < q.length; k++) if (q[k].u === uid) { i = k; break; }
+        if (i < 0) break;
+        var it = q[i], r = await sb.rpc("record_result", { p_result: it.r, p_species: it.s || null });
+        if (r.error) break;
+        q = qGet(); q.splice(i, 1); qSet(q);
+      }
+    } catch (e) {}
+    flushing = false;
+  }
+  window.ArrecifeStats = {
+    record: function(i){
+      if (!name || !uid || !i || (i.me !== "white" && i.me !== "black")) return;
+      var res = i.type === "draw" ? "draw" : (i.winner === i.me ? "win" : "loss");
+      var sp = (res === "win" && !i.resigned && i.mover === i.me && SP.indexOf(i.species) >= 0) ? i.species : null;
+      qSet(qGet().concat([{ u: uid, r: res, s: sp }]));
+      flush().then(function(){ if (isOpen() && name) loadOwn(); });
+    }
+  };
+
+  /* ---------- Sesión ---------- */
+  function setUser(user){
+    if (!user) { name = null; uid = null; paintMenu(); paintModal(); return; }
+    uid = user.id;
+    var meta = user.user_metadata && user.user_metadata.username;
+    name = (meta && RX.test(meta)) ? meta : null;
+    paintMenu(); paintModal();
+    if (name) { if (isOpen()) loadOwn(); flush(); }
+    else sb.from("profiles").select("username").eq("id", user.id).maybeSingle().then(function(r){
+      if (r && r.data && RX.test(r.data.username || "")) { name = r.data.username; paintMenu(); paintModal(); if (isOpen()) loadOwn(); flush(); }
+    }, function(){});
+  }
+
+  function friendly(err){
+    var t = (err && err.message || "").toLowerCase();
+    if (t.indexOf("invalid login") >= 0) return "Usuario o contraseña incorrectos.";
+    if (t.indexOf("already") >= 0 || t.indexOf("database error") >= 0 || t.indexOf("duplicate") >= 0) return "Ese nombre de usuario ya está en uso.";
+    if (t.indexOf("rate") >= 0 || t.indexOf("too many") >= 0) return "Demasiados intentos. Espera un momento.";
+    if (t.indexOf("fetch") >= 0 || t.indexOf("network") >= 0) return "No hay conexión con el servidor.";
+    if (t.indexOf("password") >= 0) return "La contraseña no es válida (mínimo 8 caracteres).";
+    return "Algo salió mal. Inténtalo de nuevo.";
+  }
+
+  async function submit(){
+    if (busy) return;
+    if (!sb) { msg("No se pudo cargar el servicio de cuentas. Revisa tu conexión."); return; }
+    var u = $("acct-user").value.trim(), p = $("acct-pass").value;
+    if (!RX.test(u)) { msg("El usuario debe tener 3 a 16 letras, números o _."); return; }
+    if (p.length < 8) { msg("La contraseña debe tener al menos 8 caracteres."); return; }
+    if (mode === "reg" && p !== $("acct-pass2").value) { msg("Las contraseñas no coinciden."); return; }
+    busy = true; $("acct-go").disabled = true; msg("Un momento…", true);
+    var email = u.toLowerCase() + DOM;
+    try {
+      var r;
+      if (mode === "reg") {
+        r = await sb.auth.signUp({ email: email, password: p, options: { data: { username: u } } });
+        if (!r.error && !r.data.session) r = await sb.auth.signInWithPassword({ email: email, password: p });
+      } else {
+        r = await sb.auth.signInWithPassword({ email: email, password: p });
+      }
+      if (r.error) { msg(friendly(r.error)); }
+      else { setUser(r.data.user || (r.data.session && r.data.session.user)); $("acct-pass").value = ""; $("acct-pass2").value = ""; msg(""); }
+    } catch (e) { msg(friendly(e)); }
+    busy = false; $("acct-go").disabled = false;
+  }
+
+  async function logout(){ try { await sb.auth.signOut(); } catch (e) {} setUser(null); }
+  async function del(){
+    if (!confirm("¿Borrar tu cuenta y tu perfil para siempre? Esto no se puede deshacer.")) return;
+    try {
+      var r = await sb.rpc("delete_my_account");
+      if (r.error) { msg("No se pudo borrar la cuenta."); return; }
+      try { await sb.auth.signOut(); } catch (e) {}
+      setUser(null); open(); msg("Tu cuenta fue borrada.", true);
+    } catch (e) { msg(friendly(e)); }
+  }
+
+  $("m-acct").addEventListener("click", open);
+  $("acct-close1").addEventListener("click", close); $("acct-close2").addEventListener("click", close);
+  $("prof-close").addEventListener("click", function(){ $("prof-modal").classList.remove("show"); });
+  $("acct-t-login").addEventListener("click", function(){ setMode("login"); });
+  $("acct-t-reg").addEventListener("click", function(){ setMode("reg"); });
+  $("acct-go").addEventListener("click", submit);
+  ["acct-user","acct-pass","acct-pass2"].forEach(function(id){ $(id).addEventListener("keydown", function(e){ if (e.key === "Enter") submit(); }); });
+  $("acct-logout").addEventListener("click", logout);
+  $("acct-del").addEventListener("click", del);
+
+  paintMenu();
+  if (sb) {
+    sb.auth.getSession().then(function(r){ setUser(r && r.data && r.data.session ? r.data.session.user : null); }, function(){});
+    sb.auth.onAuthStateChange(function(ev, session){ if (ev === "SIGNED_OUT") setUser(null); else if (session && session.user && !name) setUser(session.user); });
+  }
+})();
+</script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var log = $("chat-log"), panel = $("chat-panel"), badge = $("chat-badge"), inp = $("chat-in");
+  var unread = 0, lastSend = 0, count = 0;
+  function isOpen(){ return panel.classList.contains("open"); }
+  function paintBadge(){ badge.textContent = unread > 9 ? "9+" : String(unread); badge.style.display = unread ? "block" : "none"; }
+  function add(text, color, name, mine, who){
+    var d = document.createElement("div"); d.className = "cm" + (mine ? " me" : "");
+    var n = document.createElement("span"); n.className = "cn " + (color === "black" ? "black" : "white"); n.textContent = name;
+    if (!mine && who) { n.style.cursor = "pointer"; n.title = "Ver perfil"; n.addEventListener("click", function(){ if (window.ArrecifeProfile) window.ArrecifeProfile.view(who); }); }
+    var t = document.createElement("span"); t.className = "ct"; t.textContent = text;
+    d.appendChild(n); d.appendChild(t); log.appendChild(d);
+    if (++count > 100) { log.removeChild(log.firstChild); count--; }
+    log.scrollTop = log.scrollHeight;
+  }
+  function sys(text){
+    var d = document.createElement("div"); d.className = "cm sys"; d.textContent = text; log.appendChild(d); log.scrollTop = log.scrollHeight;
+  }
+  function open(){ panel.classList.add("open"); unread = 0; paintBadge(); log.scrollTop = log.scrollHeight; setTimeout(function(){ try { inp.focus(); } catch (e) {} }, 50); }
+  function close(){ panel.classList.remove("open"); }
+  function send(){
+    var x = inp.value.replace(/\s+/g, " ").trim().slice(0, 200);
+    if (!x) return;
+    var t = Date.now(); if (t - lastSend < 400) return;
+    var r = window.ArrecifeNetChat && window.ArrecifeNetChat.send(x);
+    if (!r) { sys("No se pudo enviar: sin conexión con tu rival."); return; }
+    lastSend = t; inp.value = "";
+    add(x, r.color, r.name || "Tú", true);
+  }
+  window.ArrecifeChat = {
+    receive: function(text, color, name){
+      add(text, color, name || "Rival", false, name || null);
+      if (!isOpen()) { unread++; paintBadge(); }
+    },
+    reset: function(){ log.textContent = ""; count = 0; unread = 0; paintBadge(); close(); }
+  };
+  $("chat-fab").addEventListener("click", function(){ isOpen() ? close() : open(); });
+  $("chat-close").addEventListener("click", close);
+  $("chat-send").addEventListener("click", send);
+  inp.addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); send(); } });
+  paintBadge();
 })();
 </script>
 </body>
