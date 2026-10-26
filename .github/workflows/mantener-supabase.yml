@@ -1,0 +1,16 @@
+name: Mantener Supabase activo
+
+on:
+  schedule:
+    - cron: "17 9 * * *"   # todos los días, 09:17 UTC
+  workflow_dispatch:        # permite ejecutarlo a mano
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar la base de datos
+        run: |
+          curl --fail --silent --show-error --max-time 30 \
+            "https://vgtoukpnwjdzjkhyxemi.supabase.co/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: sb_publishable_2gCLTf5RY-fvAJ84Louheg_2jH3NJ5F"
