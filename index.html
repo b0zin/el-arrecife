@@ -923,6 +923,14 @@ html.gfx-nowater .bg-water::before{ }
   .pf-bio-t{ font-family:var(--font-body); font-size:14px; line-height:1.4; color:var(--ink); word-break:break-word; overflow-wrap:anywhere; }
   .pf-count{ text-align:right; font-size:9px; color:var(--ink-dim); margin:-4px 0 8px; }
   textarea.acct-in{ resize:none; min-height:64px; }
+  #cus-box{ max-height:90vh; overflow-y:auto; }
+  .cus-note{ font-family:var(--font-body); font-size:13px; line-height:1.4; color:var(--ink-dim); margin:2px 0 10px; }
+  .cus-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .cus-opt{ position:relative; display:block; background:var(--bg-deep); border:2px solid var(--panel-line); border-radius:10px; padding:6px 2px 4px; cursor:pointer; text-align:center; font-family:var(--font-body); font-size:11px; line-height:1.2; color:var(--ink); }
+  .cus-opt img{ width:46px; height:auto; display:block; margin:0 auto 3px; }
+  .cus-opt.sel{ border-color:var(--gold); }
+  .cus-opt.lock{ opacity:.5; border-style:dashed; cursor:default; }
+  .cus-plus{ font-size:20px; line-height:40px; height:40px; color:var(--ink-dim); }
 </style>
 </head>
 <body>
@@ -1040,11 +1048,19 @@ html.gfx-nowater .bg-water::before{ }
   <div id="acct-in" style="display:none">
     <div id="acct-card"></div>
     <div class="acct-msg" id="acct-msg2"></div>
+    <div class="modal-actions"><button class="btn-primary" id="acct-cus" type="button">🎨 Personalizar</button></div>
     <div class="modal-actions"><button class="btn-ghost" id="acct-logout" type="button">Cerrar sesión</button><button class="btn-primary" id="acct-close2" type="button">Listo</button></div>
     <div class="modal-actions"><button class="btn-ghost" id="acct-del" type="button" style="color:var(--danger)">Borrar mi cuenta</button></div>
   </div>
 </div></div>
-<div id="pf-bank" hidden><img id="pf-sp-tortuga" data-s="tortuga_white" alt=""><img id="pf-sp-mantarraya" data-s="mantarraya_white" alt=""><img id="pf-sp-langosta" data-s="langosta_white" alt=""><img id="pf-sp-cangrejo" data-s="cangrejo_white" alt=""><img id="pf-sp-caballito" data-s="caballito_white" alt=""><img id="pf-sp-medusa" data-s="medusa_white" alt=""><img id="pf-sp-tiburon" data-s="tiburon_white" alt=""><img id="pf-sp-pulpo" data-s="pulpo_white" alt=""></div>
+<div id="pf-bank" hidden><img id="bk-tortuga_white" data-s="tortuga_white" alt=""><img id="bk-tortuga_black" data-s="tortuga_black" alt=""><img id="bk-mantarraya_white" data-s="mantarraya_white" alt=""><img id="bk-mantarraya_black" data-s="mantarraya_black" alt=""><img id="bk-langosta_white" data-s="langosta_white" alt=""><img id="bk-langosta_black" data-s="langosta_black" alt=""><img id="bk-cangrejo_white" data-s="cangrejo_white" alt=""><img id="bk-cangrejo_black" data-s="cangrejo_black" alt=""><img id="bk-caballito_white" data-s="caballito_white" alt=""><img id="bk-caballito_black" data-s="caballito_black" alt=""><img id="bk-medusa_white" data-s="medusa_white" alt=""><img id="bk-medusa_black" data-s="medusa_black" alt=""><img id="bk-tiburon_white" data-s="tiburon_white" alt=""><img id="bk-tiburon_black" data-s="tiburon_black" alt=""><img id="bk-pulpo_white" data-s="pulpo_white" alt=""><img id="bk-pulpo_black" data-s="pulpo_black" alt=""></div>
+<div class="modal-backdrop" id="cus-modal"><div class="modal" id="cus-box">
+  <h2>Personalizar</h2>
+  <div class="acct-tabs"><button id="cus-t-avatar" class="on" type="button">Avatar</button><button id="cus-t-skins" type="button">Skins</button><button id="cus-t-stickers" type="button">Stickers</button></div>
+  <div id="cus-body"></div>
+  <div class="acct-msg" id="cus-msg"></div>
+  <div class="modal-actions"><button class="btn-primary" id="cus-close" type="button">Listo</button></div>
+</div></div>
 <div class="modal-backdrop" id="prof-modal"><div class="modal">
   <h2>Perfil</h2>
   <div id="prof-card"></div>
@@ -1622,6 +1638,15 @@ html.gfx-nowater .bg-water::before{ }
     }
   }
 
+  // Skin elegida por el dueño (si no hay, el sprite normal). Mi skin: yo; en online, la del rival viene en su hello.
+  function skinSrc(species, owner){
+    const def = SPRITES[`${species}_${owner}`];
+    try{
+      const A = window.ArrecifeSkins; if(!A) return def;
+      const who = onl ? (owner===onl.color ? "mine" : "rival") : (aiCfg ? (owner===aiOf() ? null : "mine") : (owner==="white" ? "mine" : null));
+      return who ? (A.href(species, owner, who) || def) : def;
+    }catch(e){ return def; }
+  }
   let statsDone = false;                              // un solo informe de resultado por partida online
   function statsReport(mover, actor, placed){
     if(!onl || statsDone || !state.gameOver) return; statsDone = true;
@@ -1993,7 +2018,7 @@ html.gfx-nowater .bg-water::before{ }
       const points = pathToPoints(ctx.path);
       const start = points[0], end = points[points.length-1];
       const w0 = HEX_SIZE*2*SPRITE_OVERSCAN, h0 = HEX_SIZE*Math.sqrt(3)*SPRITE_OVERSCAN;
-      const href = SPRITES[`${ctx.species}_${ctx.owner}`];
+      const href = skinSrc(ctx.species, ctx.owner);
 
       const overlay = el("image", {
         href, x:start.x-w0/2, y:start.y-h0/2, width:w0, height:h0,
@@ -2496,7 +2521,7 @@ html.gfx-nowater .bg-water::before{ }
       const y = baseY - (gh.stackDepth||0)*5; // sits on top of whatever is already stacked there
       const w = HEX_SIZE*2*SPRITE_OVERSCAN, h = HEX_SIZE*Math.sqrt(3)*SPRITE_OVERSCAN;
       g.appendChild(el("image",{
-        href: SPRITES[`${gh.species}_${gh.owner}`],
+        href: skinSrc(gh.species, gh.owner),
         x:bx-w/2, y:y-h/2, width:w, height:h,
         opacity:0.45, class:"pixel-sprite ghost-sprite"
       }));
@@ -2575,8 +2600,7 @@ html.gfx-nowater .bg-water::before{ }
   }
 
   function drawPieceHex(g, x, y, speciesKey, owner, cellKey, dimmed){
-    const spriteKey = `${speciesKey}_${owner}`;
-    const href = SPRITES[spriteKey];
+    const href = skinSrc(speciesKey, owner);
     const opacity = dimmed ? 0.55 : 1;
     const w = HEX_SIZE*2*SPRITE_OVERSCAN, h = HEX_SIZE*Math.sqrt(3)*SPRITE_OVERSCAN;
     g.appendChild(el("image",{
@@ -2823,7 +2847,7 @@ html.gfx-nowater .bg-water::before{ }
       const disabled = !trayInteractive || remaining<=0 || (forced && spKey!=="tortuga") || !!state.gameOver || isAnimating || netLocked();
       btn.disabled = disabled;
       if(state.selected===spKey && trayInteractive) btn.classList.add("selected");
-      btn.innerHTML = `<img class="pixel-sprite" src="${SPRITES[spKey+'_'+player]}" alt="${sp.name}" width="34" height="30">
+      btn.innerHTML = `<img class="pixel-sprite" src="${skinSrc(spKey, player)}" alt="${sp.name}" width="34" height="30">
         <span class="count">${remaining}</span>
         <span class="name">${sp.name}</span>`;
       btn.addEventListener("click", ()=>{
@@ -2987,7 +3011,7 @@ html.gfx-nowater .bg-water::before{ }
   }
   function vGhost(g, c){
     const w = HEX_SIZE*2*SPRITE_OVERSCAN, h = HEX_SIZE*Math.sqrt(3)*SPRITE_OVERSCAN, {x,y} = c.C;
-    const im = el("image",{ href:SPRITES[c.sp+"_"+c.owner], x:x-w/2, y:y-h/2, width:w, height:h, class:"fx-overlay", style:"image-rendering:pixelated;image-rendering:crisp-edges" });
+    const im = el("image",{ href:skinSrc(c.sp, c.owner), x:x-w/2, y:y-h/2, width:w, height:h, class:"fx-overlay", style:"image-rendering:pixelated;image-rendering:crisp-edges" });
     g.appendChild(im);
     return { im, set:(dx,dy,sx,sy,rot)=>im.setAttribute("transform", `translate(${x+dx} ${y+dy}) rotate(${rot||0}) scale(${sx} ${sy==null?sx:sy}) translate(${-x} ${-y})`) };
   }
@@ -3477,7 +3501,7 @@ html.gfx-nowater .bg-water::before{ }
   function vUndoPlace(k, sp, owner){
     SFX("undo_place");
     const C=vxy(k), w=HEX_SIZE*2*SPRITE_OVERSCAN, h=HEX_SIZE*Math.sqrt(3)*SPRITE_OVERSCAN;
-    playFxOnce(()=>el("image",{ href:SPRITES[sp+"_"+owner], x:C.x-w/2, y:C.y-h/2, width:w, height:h, class:"fx-overlay", style:"image-rendering:pixelated;image-rendering:crisp-edges" }),
+    playFxOnce(()=>el("image",{ href:skinSrc(sp, owner), x:C.x-w/2, y:C.y-h/2, width:w, height:h, class:"fx-overlay", style:"image-rendering:pixelated;image-rendering:crisp-edges" }),
       (n,t)=>{ const e=easeOutCubic(t), s=1-.45*e; n.setAttribute("transform",`translate(${C.x} ${C.y-28*e}) scale(${s}) translate(${-C.x} ${-C.y})`); n.setAttribute("opacity",1-t*t); }, 440);
     vFlash(k);
   }
@@ -3513,7 +3537,7 @@ html.gfx-nowater .bg-water::before{ }
     const g=state.gameOver; if(!g) return;
     const w=g.winner, wn=w==="white"?"Blancas":"Negras";
     const title = g.type==="draw" ? "¡Empate!" : (onl ? (w===onl.color ? "¡Ganaste!" : "Ganó tu rival") : aiCfg ? (w===aiCfg.human ? "¡Ganaste!" : "Ganó la IA") : "¡Ganan las "+wn+"!");
-    const sprite = actor && topOf(actor.key) ? SPRITES[actor.species+"_"+topOf(actor.key).owner] : "";
+    const sprite = actor && topOf(actor.key) ? skinSrc(actor.species, topOf(actor.key).owner) : "";
     const rows = [["Turnos jugados", Math.max(1,state.turnNumber-1)]];
     if(g.type==="draw") rows.push(["Resultado","Ambas Reinas rodeadas a la vez"]);
     else { rows.push(["Ganan", wn]); if(g.resigned) rows.push(["Resultado","Abandono"]); else if(actor && VNAME[actor.species]) rows.push(["Jugada final", VNAME[actor.species]]); }
@@ -4335,6 +4359,12 @@ html.gfx-nowater .bg-water::before{ }
         if (m.n != null) { if (!isInt(m.n, 1, 5000)) return null; o.n = m.n; }
         if (m.h != null) { if (!isHash(m.h)) return null; o.h = m.h; }
         if (m.u != null) { if (typeof m.u !== "string" || !/^[A-Za-z0-9_]{3,16}$/.test(m.u)) return null; o.u = m.u; }
+        if (m.k != null) {
+          if (typeof m.k !== "object" || Array.isArray(m.k)) return null;
+          const ks = Object.keys(m.k); if (ks.length > 8) return null; const kk = {};
+          for (const sp of ks) { if (["tortuga","mantarraya","langosta","cangrejo","caballito","medusa","tiburon","pulpo"].indexOf(sp) < 0 || typeof m.k[sp] !== "string" || !/^[a-z0-9_]{1,24}$/.test(m.k[sp])) return null; kk[sp] = m.k[sp]; }
+          o.k = kk;
+        }
         if (m.la != null) {
           const a = vAction(m.la.a);
           if (!a || !isInt(m.la.n, 1, 5000) || !isHash(m.la.h)) return null;
@@ -4514,6 +4544,7 @@ html.gfx-nowater .bg-water::before{ }
     const had = !!S || !!readMeta();
     closeSession(reason === undefined ? "quit" : reason);
     try { if (window.ArrecifeChat) window.ArrecifeChat.reset(); } catch (e) {}
+    try { if (window.ArrecifeSkins) window.ArrecifeSkins.setRival(null); } catch (e) {}
     clearMeta(); banner(null); closeModal(); setIndicator("off");
     if (B.active()) B.leave();
     resetLobby();
@@ -4580,7 +4611,7 @@ html.gfx-nowater .bg-water::before{ }
 
   function sendHello() {
     const m = { t: "hello", role: S.role, color: S.color };
-    try { const u = window.ArrecifeAcct && window.ArrecifeAcct.username(); if (u) m.u = u; } catch (e) {}
+    try { const u = window.ArrecifeAcct && window.ArrecifeAcct.username(); if (u) m.u = u; const k = window.ArrecifeSkins && window.ArrecifeSkins.net(); if (k && Object.keys(k).length) m.k = k; } catch (e) {}
     if (S.started) { const g = B.game(); m.n = g.turnNumber; m.h = N.hashGame(g); }
     if (S.role === "guest") { m.sid = S.sid; if (S.started && S.lastAct) m.la = S.lastAct; }
     send(m);
@@ -4635,6 +4666,7 @@ html.gfx-nowater .bg-water::before{ }
 
   function onHello(m, meta) {
     if (m.u && S.rivalName !== m.u) { S.rivalName = m.u; toast("Tu rival es " + m.u); }
+    try { if (window.ArrecifeSkins) window.ArrecifeSkins.setRival(m.k || null); } catch (e) {}
     if (S.role === "host") {
       if (m.role !== "guest" || !m.sid) return;
       if (S.guestSid && m.sid !== S.guestSid) { rejectConn(meta.conn, "full"); return; }   // la partida ya tiene su invitado
@@ -5055,7 +5087,7 @@ html.gfx-nowater .bg-water::before{ }
 
   function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function num(v){ v = Number(v); return isFinite(v) && v > 0 ? Math.floor(v) : 0; }
-  function spriteSrc(sp){ var i = $("pf-sp-" + sp); return i ? i.src : ""; }
+  function spriteSrc(sp){ var i = $("bk-" + sp + "_white"); return i ? i.src : ""; }
   function isOpen(){ return $("acct-modal").classList.contains("show"); }
 
   function paintMenu(){ $("m-acct-sub").textContent = name ? "@" + name : (sb ? "Invitado" : "Sin conexión"); }
@@ -5086,7 +5118,7 @@ html.gfx-nowater .bg-water::before{ }
     box.textContent = "";
     var st = d.stats || {}, w = num(st.wins), l = num(st.losses), dr = num(st.draws);
     var head = el("div", "pf-head"), av = el("div", "pf-av"), im = document.createElement("img");
-    im.alt = ""; im.src = spriteSrc("tortuga"); av.appendChild(im);
+    im.alt = ""; im.src = spriteSrc(SP.indexOf(d.avatar) >= 0 ? d.avatar : "tortuga"); av.appendChild(im);
     head.appendChild(av); head.appendChild(el("div", "pf-name", "@" + d.username)); box.appendChild(head);
 
     var g = el("div", "pf-stats");
@@ -5172,16 +5204,151 @@ html.gfx-nowater .bg-water::before{ }
     }
   };
 
+  /* ---------- Cosmética: avatar, skins y stickers ---------- */
+  // Máscara (58x50) de la zona de la "ficha" circular dentro del marco hexagonal. La skin aporta la ficha; el marco lo pone el color del dueño.
+  var MASK_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/gAAAAAAH//gAAAAAB///gAAAAAf///gAAAAD////AAAAAf///+AAAAD////8AAAAf////4AAAD/////wAAAP/////AAAB/////+AAAH/////4AAA//////wAAD//////AAAf/////+AAB//////4AAH//////gAAf/////+AAB//////4AAH//////gAAf/////+AAB//////4AAH//////gAAf/////+AAB//////4AAH//////gAAP/////8AAA//////wAAB/////+AAAH/////4AAAP/////AAAA/////8AAAB/////gAAAD////8AAAAH////gAAAAP///8AAAAAf///gAAAAAf//4AAAAAAf/+AAAAAAAf/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  var TW = 58, TH = 50, CK = "arrecife_cos_v1";
+  // Catálogo de skins por especie. Para agregar arte nuevo: { id:"nombre_corto", name:"Nombre", src:"data:image/png;base64,..." o ruta a un PNG de 58x50 }
+  var CATALOG = {
+    tortuga:    [{ id:"clasico", name:"Clásico", token:"white" }],
+    mantarraya: [{ id:"claro", name:"Estilo claro", token:"white" }, { id:"oscuro", name:"Estilo oscuro", token:"black" }],
+    langosta:   [{ id:"clasico", name:"Clásico", token:"white" }],
+    cangrejo:   [{ id:"clasico", name:"Clásico", token:"white" }],
+    caballito:  [{ id:"clasico", name:"Clásico", token:"white" }],
+    medusa:     [{ id:"clasico", name:"Clásico", token:"white" }],
+    tiburon:    [{ id:"claro", name:"Estilo claro", token:"white" }, { id:"oscuro", name:"Estilo oscuro", token:"black" }],
+    pulpo:      [{ id:"calamar", name:"Calamar", token:"white" }, { id:"pulpo", name:"Pulpo", token:"black" }]
+  };
+  var cos = { skins: {}, stickers: {} }, rivalSkins = null, myAvatar = null, cache = {}, maskBits = null, saveT = null, cusTab = "avatar";
+  var ID_RX = /^[a-z0-9_]{1,24}$/;
+
+  function entryOf(sp, id){ var L = CATALOG[sp]; if (!L || L.length < 2 || typeof id !== "string") return null; for (var i = 0; i < L.length; i++) if (L[i].id === id) return L[i]; return null; }
+  function normCos(c){
+    var o = { skins: {}, stickers: {} };
+    if (c && c.skins && typeof c.skins === "object") Object.keys(c.skins).forEach(function(sp){ if (entryOf(sp, c.skins[sp])) o.skins[sp] = c.skins[sp]; });
+    if (c && c.stickers && typeof c.stickers === "object") Object.keys(c.stickers).forEach(function(sp){ if (SP.indexOf(sp) >= 0 && ID_RX.test(String(c.stickers[sp]))) o.stickers[sp] = c.stickers[sp]; });
+    return o;
+  }
+  function mask(){
+    if (maskBits) return maskBits;
+    var bin = atob(MASK_B64), bits = new Uint8Array(TW * TH), n = 0;
+    for (var i = 0; i < bin.length; i++) { var b = bin.charCodeAt(i); for (var k = 7; k >= 0 && n < TW * TH; k--) bits[n++] = (b >> k) & 1; }
+    return (maskBits = bits);
+  }
+  function bank(sp, c){ return $("bk-" + sp + "_" + c); }
+  function loadImg(img){
+    if (img.complete && img.naturalWidth) return Promise.resolve(img);
+    return img.decode ? img.decode().then(function(){ return img; }) : new Promise(function(res, rej){ img.onload = function(){ res(img); }; img.onerror = rej; });
+  }
+  // Ficha de la skin dentro del marco del dueño (blanco/negro)
+  function compose(sp, e, owner){
+    var key = sp + "|" + e.id + "|" + owner;
+    if (cache[key]) return Promise.resolve(cache[key]);
+    var tImg = e.src ? (function(){ var im = new Image(); im.src = e.src; return im; })() : bank(sp, e.token), fImg = bank(sp, owner);
+    if (!tImg || !fImg) return Promise.reject(new Error("sin sprite"));
+    return Promise.all([loadImg(fImg), loadImg(tImg)]).then(function(r){
+      var c = document.createElement("canvas"); c.width = TW; c.height = TH;
+      var x = c.getContext("2d", { willReadFrequently: true });
+      x.drawImage(r[0], 0, 0, TW, TH); var F = x.getImageData(0, 0, TW, TH);
+      x.clearRect(0, 0, TW, TH); x.drawImage(r[1], 0, 0, TW, TH); var T = x.getImageData(0, 0, TW, TH), m = mask();
+      for (var i = 0; i < TW * TH; i++) if (m[i]) { var j = i * 4; F.data[j] = T.data[j]; F.data[j+1] = T.data[j+1]; F.data[j+2] = T.data[j+2]; F.data[j+3] = T.data[j+3]; }
+      x.putImageData(F, 0, 0);
+      return (cache[key] = c.toDataURL("image/png"));
+    });
+  }
+  function prepare(){
+    var jobs = [];
+    [cos.skins, rivalSkins].forEach(function(sk){
+      if (!sk) return;
+      Object.keys(sk).forEach(function(sp){ var e = entryOf(sp, sk[sp]); if (e) ["white", "black"].forEach(function(o){ jobs.push(compose(sp, e, o).catch(function(){})); }); });
+    });
+    return Promise.all(jobs).then(function(){ try { if (window.ArrecifeGame) window.ArrecifeGame.render(); } catch (e) {} });
+  }
+  window.ArrecifeSkins = {
+    // Sprite de la skin elegida para ese dueño (null = usar el sprite normal del juego)
+    href: function(sp, owner, who){
+      var sk = who === "mine" ? cos.skins : who === "rival" ? rivalSkins : null; if (!sk) return null;
+      var e = entryOf(sp, sk[sp]); return e ? (cache[sp + "|" + e.id + "|" + owner] || null) : null;
+    },
+    net: function(){ var o = {}; Object.keys(cos.skins).forEach(function(sp){ if (entryOf(sp, cos.skins[sp])) o[sp] = cos.skins[sp]; }); return o; },
+    setRival: function(k){
+      var r = null;
+      if (k && typeof k === "object") { r = {}; Object.keys(k).forEach(function(sp){ if (entryOf(sp, k[sp])) r[sp] = k[sp]; }); }
+      rivalSkins = r; prepare();
+    }
+  };
+  function cacheSet(){ try { localStorage.setItem(CK, JSON.stringify({ uid: uid, cos: cos })); } catch (e) {} }
+  function clearCos(){ cos = { skins: {}, stickers: {} }; myAvatar = null; try { localStorage.removeItem(CK); } catch (e) {} prepare(); }
+  function loadCos(){
+    var c = null; try { c = JSON.parse(localStorage.getItem(CK) || "null"); } catch (e) {}
+    if (c && c.uid === uid) { cos = normCos(c.cos); prepare(); }
+    sb.from("profiles").select("cosmetics,avatar").eq("id", uid).maybeSingle().then(function(r){
+      if (r && r.data) { myAvatar = SP.indexOf(r.data.avatar) >= 0 ? r.data.avatar : null; cos = normCos(r.data.cosmetics); cacheSet(); prepare(); if ($("cus-modal").classList.contains("show")) renderCus(); }
+    }, function(){});
+  }
+  function cusMsg(t, ok){ var a = $("cus-msg"); a.textContent = t || ""; a.className = "acct-msg" + (ok ? " ok" : ""); }
+  function saveCos(){
+    cacheSet(); prepare(); clearTimeout(saveT);
+    saveT = setTimeout(async function(){
+      if (!sb || !uid) return;
+      try { var r = await sb.from("profiles").update({ cosmetics: cos }).eq("id", uid); cusMsg(r.error ? "No se pudo guardar." : "Guardado.", !r.error); } catch (e) { cusMsg("No se pudo guardar."); }
+    }, 500);
+  }
+  async function saveAvatar(sp){
+    if (!sb || !uid) return;
+    try { var r = await sb.from("profiles").update({ avatar: sp }).eq("id", uid); cusMsg(r.error ? "No se pudo guardar." : "Guardado.", !r.error); if (!r.error && isOpen()) loadOwn(); } catch (e) { cusMsg("No se pudo guardar."); }
+  }
+  function opt(src, label, cls){
+    var b = el("button", "cus-opt" + (cls ? " " + cls : "")); b.type = "button";
+    var i = document.createElement("img"); i.alt = ""; i.src = src || ""; b.appendChild(i); b.appendChild(el("span", null, label)); return b;
+  }
+  function lockTile(label){ var d = el("div", "cus-opt lock"); d.appendChild(el("div", "cus-plus", "＋")); d.appendChild(el("span", null, label || "Pronto")); return d; }
+  function renderCus(){
+    var body = $("cus-body"); body.textContent = ""; cusMsg("");
+    ["avatar", "skins", "stickers"].forEach(function(t){ $("cus-t-" + t).classList.toggle("on", cusTab === t); });
+    if (cusTab === "avatar") {
+      body.appendChild(el("div", "cus-note", "Elige tu foto de perfil. Por ahora son los sprites del juego; más adelante habrá avatares propios."));
+      var g = el("div", "cus-grid");
+      SP.forEach(function(sp){
+        var b = opt(spriteSrc(sp), VN[sp], (myAvatar || "tortuga") === sp ? "sel" : "");
+        b.addEventListener("click", function(){ myAvatar = sp; saveAvatar(sp); renderCus(); });
+        g.appendChild(b);
+      });
+      body.appendChild(g);
+    } else if (cusTab === "skins") {
+      body.appendChild(el("div", "cus-note", "Elige cómo se ven tus piezas. Tu skin es la misma si juegas con blancas o negras: el marco de la ficha sigue indicando tu color."));
+      SP.forEach(function(sp){
+        var L = CATALOG[sp] || [], multi = L.length > 1, cur = cos.skins[sp] || "auto";
+        var sec = el("div", "pf-sec"); sec.appendChild(el("div", "pf-lbl", VN[sp])); var g2 = el("div", "cus-grid");
+        if (multi) {
+          var a = opt(spriteSrc(sp), "Según mi color", cur === "auto" ? "sel" : "");
+          a.addEventListener("click", function(){ delete cos.skins[sp]; saveCos(); renderCus(); }); g2.appendChild(a);
+          L.forEach(function(e){
+            var b = opt(spriteSrc(sp), e.name, cur === e.id ? "sel" : "");
+            compose(sp, e, "white").then(function(u){ b.firstChild.src = u; }, function(){});
+            b.addEventListener("click", function(){ cos.skins[sp] = e.id; saveCos(); renderCus(); }); g2.appendChild(b);
+          });
+        } else g2.appendChild(opt(spriteSrc(sp), "Clásico", "sel"));
+        g2.appendChild(lockTile("Pronto")); sec.appendChild(g2); body.appendChild(sec);
+      });
+    } else {
+      body.appendChild(el("div", "cus-note", "Stickers: podrás pegar 1 sticker sobre cada pieza. Todavía no hay stickers disponibles; aquí aparecerán cuando lleguen."));
+      var g3 = el("div", "cus-grid");
+      SP.forEach(function(sp){ var t = lockTile(VN[sp]); t.insertBefore(Object.assign(document.createElement("img"), { alt: "", src: spriteSrc(sp) }), t.firstChild); g3.appendChild(t); });
+      body.appendChild(g3);
+    }
+  }
+
   /* ---------- Sesión ---------- */
   function setUser(user){
-    if (!user) { name = null; uid = null; paintMenu(); paintModal(); return; }
+    if (!user) { name = null; uid = null; clearCos(); paintMenu(); paintModal(); return; }
     uid = user.id;
     var meta = user.user_metadata && user.user_metadata.username;
     name = (meta && RX.test(meta)) ? meta : null;
     paintMenu(); paintModal();
-    if (name) { if (isOpen()) loadOwn(); flush(); }
+    if (name) { if (isOpen()) loadOwn(); flush(); loadCos(); }
     else sb.from("profiles").select("username").eq("id", user.id).maybeSingle().then(function(r){
-      if (r && r.data && RX.test(r.data.username || "")) { name = r.data.username; paintMenu(); paintModal(); if (isOpen()) loadOwn(); flush(); }
+      if (r && r.data && RX.test(r.data.username || "")) { name = r.data.username; paintMenu(); paintModal(); if (isOpen()) loadOwn(); flush(); loadCos(); }
     }, function(){});
   }
 
@@ -5238,6 +5405,9 @@ html.gfx-nowater .bg-water::before{ }
   ["acct-user","acct-pass","acct-pass2"].forEach(function(id){ $(id).addEventListener("keydown", function(e){ if (e.key === "Enter") submit(); }); });
   $("acct-logout").addEventListener("click", logout);
   $("acct-del").addEventListener("click", del);
+  $("acct-cus").addEventListener("click", function(){ cusTab = "avatar"; renderCus(); $("cus-modal").classList.add("show"); });
+  $("cus-close").addEventListener("click", function(){ $("cus-modal").classList.remove("show"); });
+  ["avatar","skins","stickers"].forEach(function(t){ $("cus-t-" + t).addEventListener("click", function(){ cusTab = t; renderCus(); }); });
 
   paintMenu();
   if (sb) {
