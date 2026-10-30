@@ -1262,8 +1262,18 @@ html.gfx-nowater .bg-water::before{ }
     mv_manta_takeoff:t=>{ whoosh(t,.3,true,.14); nz(t,{ f:700, f2:1800, dur:.14, vol:.06 }); nz(t+.14,{ f:700, f2:1800, dur:.14, vol:.06 }); },
     mv_manta_land:t=>splash(t,.8),
     mv_langosta:t=>nz(t,{ f:2000, f2:1200, dur:.45, vol:.1, q:.6 }),
-    mv_anguila:t=>{ nz(t,{ f:900, f2:2400, dur:.24, vol:.1, q:.8 }); osc(t,{ f:150, f2:260, dur:.22, vol:.06 }); },
-    eel_zap:t=>{ nz(t,{ type:"highpass", f:2500, dur:.32, vol:.12, q:.6 }); osc(t,{ f:220, f2:60, dur:.34, vol:.12, type:"sawtooth" }); osc(t+.05,{ f:1800, f2:300, dur:.22, vol:.06, type:"square" }); chime(t+.12,[1568,2093],.05,.05,"sine"); },
+    mv_anguila:t=>{ osc(t,{ f:180, f2:90, dur:.1, vol:.07 }); [0,.1,.2].forEach((d,i)=>osc(t+.07+d,{ f:300+i*60, f2:620+i*80, dur:.12, vol:.07 })); nz(t+.05,{ f:700, f2:2100, dur:.35, vol:.07, q:.9, a:.1 }); },
+    eel_squish:t=>{ osc(t,{ f:420, f2:150, dur:.14, vol:.1 }); osc(t+.05,{ f:260, f2:110, dur:.12, vol:.07 }); nz(t,{ type:"lowpass", f:900, dur:.1, vol:.06 }); chime(t+.08,[1319,1760],.05,.03,"sine"); },
+    eel_charge:t=>{ osc(t,{ f:90, f2:520, dur:.28, vol:.1, type:"sawtooth", a:.18, cut:1400 }); nz(t,{ type:"highpass", f:3000, f2:7000, dur:.28, vol:.04, a:.2 }); },
+    eel_hit:t=>{ for(let k=0;k<5;k++) nz(t+k*.04+rnd()*.015,{ f:2500+rnd()*3000, q:3, dur:.03, vol:.06 }); osc(t,{ f:260, f2:90, dur:.18, vol:.08, type:"sawtooth", cut:1200 }); },
+    win_anguila:t=>{
+      osc(t,{ f:70, f2:340, dur:2.0, vol:.07, type:"sawtooth", a:.5, cut:900 }); osc(t+.2,{ f:140, f2:680, dur:1.8, vol:.035, type:"square", a:.6, cut:1600 });
+      nz(t+.2,{ type:"highpass", f:3000, dur:1.8, vol:.035, a:.8 });
+      for(let k=1;k<=6;k++){ const o=k/6, e=o<.5?Math.sqrt(o/2):1-Math.sqrt((1-o)/2), tt=t+.325+1.69*e; osc(tt,{ f:N(72+PENT[k%5]), dur:.12, vol:.09, type:"square", cut:3000 }); nz(tt,{ type:"highpass", f:3500, dur:.05, vol:.07 }); }
+      for(let k=0;k<26;k++) nz(t+.3+k*.075+rnd()*.03,{ f:2500+rnd()*3500, q:3, dur:.03, vol:.045 });
+      const S0=t+2.275; nz(S0,{ type:"highpass", f:2500, dur:.12, vol:.4 }); osc(S0,{ f:90, f2:30, dur:1.2, vol:.38 }); nz(S0,{ type:"lowpass", f:220, f2:90, dur:1.4, vol:.3, a:.01 });
+      osc(S0+.02,{ f:1800, f2:200, dur:.4, vol:.1, type:"sawtooth", cut:4000 }); chime(S0+.22,[784,988,1319,1760,2349],.1,.07,"triangle"); },
+    eel_zap:t=>{ thud(t,120,.18); nz(t,{ type:"highpass", f:2500, dur:.32, vol:.12, q:.6 }); osc(t,{ f:220, f2:60, dur:.34, vol:.12, type:"sawtooth" }); osc(t+.05,{ f:1800, f2:300, dur:.22, vol:.06, type:"square" }); chime(t+.12,[1568,2093],.05,.05,"sine"); },
     mv_cangrejo_step:t=>{ osc(t,{ f:1800+rnd()*300, dur:.03, vol:.07, type:"square", cut:3500 }); nz(t,{ type:"highpass", f:5000, dur:.02, vol:.04 }); },
     mv_caballito_hop:t=>osc(t,{ f:300, f2:700, dur:.12, vol:.14 }),
     mv_caballito_land:t=>chime(t,[1568,2093],.05,.07,"sine"),
@@ -2025,7 +2035,8 @@ html.gfx-nowater .bg-water::before{ }
     if(action.type==="lobster-ability") return "lobster-heavy-drop";
     if(action.category==="jump") return "manta-jump";
     if(action.category==="hop") return "seahorse-hop";
-    if(action.category==="lobsterMove" || action.category==="eelMove") return "simple-glide";
+    if(action.category==="eelMove") return "eel-slither";
+    if(action.category==="lobsterMove") return "simple-glide";
     const src = action.sourceSpecies || moverSpecies;
     if(src==="tiburon") return "shark-slide";
     if(src==="cangrejo") return "crab-step";
@@ -2040,6 +2051,7 @@ html.gfx-nowater .bg-water::before{ }
     let base;
     switch(profile){
       case "simple-glide": base = 260; break;
+      case "eel-slither": base = 300+segs*85; break;
       case "shark-slide": base = Math.min(450, 220+segs*45); break;
       case "crab-step": base = 300+segs*40; break;
       case "medusa-wobble-glide": base = 320; break;
@@ -2052,7 +2064,120 @@ html.gfx-nowater .bg-water::before{ }
     return base * ANIM_SLOWDOWN * GFX.animK();
   }
 
+  // ================= Anguila: reptación gelatinosa =================
+  // La ficha se corta en tiras verticales que ondulan (cuerpo de gelatina), se estira y se aplasta en la
+  // dirección del movimiento, serpentea de lado a lado, pasa un pelín de largo y se acomoda temblando.
+  function makeEelBody(href, strips){
+    const w0 = HEX_SIZE*2*SPRITE_OVERSCAN, h0 = HEX_SIZE*Math.sqrt(3)*SPRITE_OVERSCAN;
+    const N = Math.max(1, strips|0), sw = w0/N, st = "image-rendering:pixelated;image-rendering:crisp-edges";
+    const g = el("g",{}), parts = [];
+    for(let i=0;i<N;i++){
+      if(N===1){ g.appendChild(el("image",{ href, x:-w0/2, y:-h0/2, width:w0, height:h0, style:st })); continue; }
+      const s = el("svg",{ x:-w0/2+i*sw, y:-h0/2, width:sw+.8, height:h0, viewBox:(i*sw)+" 0 "+(sw+.8)+" "+h0, preserveAspectRatio:"none", style:"overflow:hidden" });
+      s.appendChild(el("image",{ href, x:0, y:0, width:w0, height:h0, style:st }));
+      g.appendChild(s); parts.push(s);
+    }
+    return { g, set(x,y,hd,sx,sy,rot,amp,ph){
+      const d = 180/Math.PI;
+      g.setAttribute("transform","translate("+x.toFixed(2)+" "+y.toFixed(2)+") rotate("+(rot*d).toFixed(2)+") rotate("+(hd*d).toFixed(2)+") scale("+sx.toFixed(3)+" "+sy.toFixed(3)+") rotate("+(-hd*d).toFixed(2)+")");
+      for(let i=0;i<parts.length;i++) parts[i].setAttribute("y",(-h0/2+amp*Math.sin(ph-i*.85)).toFixed(2));
+    } };
+  }
+  const eelBack = u => { const s=.9, v=u-1; return 1+(s+1)*v*v*v+s*v*v; };
+  // pose(t): posición, rumbo, estiramiento y ondulación de la Anguila a lo largo del camino (t = 0..1)
+  function makeEelPose(points, sgn){
+    const L=[]; let tot=0;
+    for(let i=1;i<points.length;i++){ const d=Math.hypot(points[i].x-points[i-1].x, points[i].y-points[i-1].y); L.push(d); tot+=d; }
+    tot = tot||1;
+    const dir=(a,b)=>{ const d=Math.hypot(b.x-a.x,b.y-a.y)||1; return { x:(b.x-a.x)/d, y:(b.y-a.y)/d }; };
+    const d0 = dir(points[0], points[1]||points[0]), d1 = dir(points[points.length-2]||points[0], points[points.length-1]), E = points[points.length-1];
+    const arc = p=>{
+      if(p<=0) return { x:points[0].x+d0.x*p*tot, y:points[0].y+d0.y*p*tot };
+      if(p>=1) return { x:E.x+d1.x*(p-1)*tot, y:E.y+d1.y*(p-1)*tot };
+      const tg=p*tot; let acc=0;
+      for(let i=0;i<L.length;i++){ if(acc+L[i]>=tg || i===L.length-1){ const s=L[i]>0?clamp01((tg-acc)/L[i]):1; return { x:lerp(points[i].x,points[i+1].x,s), y:lerp(points[i].y,points[i+1].y,s) }; } acc+=L[i]; }
+      return E;
+    };
+    const T1=.14, T2=.8, A=HEX_SIZE*.26;
+    return function pose(t){
+      t = clamp01(t);
+      let p=0, sx=1, sy=1, wv=0, rot=0, lat=0;
+      if(t<T1){ const e=easeOutCubic(t/T1); p=-.035*e; sx=1-.09*e; sy=1+.08*e; wv=.3*e; }                       // se encoge para tomar impulso
+      else if(t<T2){
+        const u=(t-T1)/(T2-T1); p=lerp(-.035,1,eelBack(u));                                                      // dispara, pasa de largo y vuelve
+        const k=easeOutCubic(Math.min(1,u*3)), tg=1+.17*Math.sin(Math.PI*clamp01(u*1.15));
+        sx=lerp(.91,tg,k); sy=lerp(1.08,1/Math.sqrt(tg),k); wv=1;
+        const env=Math.pow(Math.sin(Math.PI*u),.8);
+        lat=sgn*A*Math.sin(u*Math.PI*3)*env; rot=sgn*.16*Math.cos(u*Math.PI*3)*env;                                // serpentea de lado a lado
+      } else { p=1; const q=(t-T2)/(1-T2), w=Math.exp(-q*4.2)*Math.sin(q*Math.PI*5); sx=1+.11*w; sy=1-.09*w; wv=Math.exp(-q*3.5); rot=.05*w; }   // tiembla como gelatina
+      const e=.035, a=arc(Math.max(-.2,p-e)), b=arc(p+e), hx=b.x-a.x, hy=b.y-a.y, hl=Math.hypot(hx,hy)||1, tx=hx/hl, ty=hy/hl, c=arc(p);
+      return { x:c.x-ty*lat, y:c.y+tx*lat, hd:Math.atan2(ty,tx), sx, sy, rot, wv };
+    };
+  }
+  function animateEelSlither(ctx){
+    return new Promise(resolve=>{
+      const camG = document.getElementById("cam");
+      if(!camG || !ctx.path || ctx.path.length<2){ resolve(); return; }
+      const points = pathToPoints(ctx.path), href = skinSrc(ctx.species, ctx.owner), full = GFX.get("anim")==="full";
+      const duration = animationDuration(ctx.profile, ctx.path), pose = makeEelPose(points, Math.random()<.5?-1:1);
+      const root = el("g",{ class:"anim-sprite" });
+      const ghosts = full ? [[.045,.28],[.09,.17],[.135,.09]].map(a=>{ const b=makeEelBody(href,1); root.appendChild(b.g); return { b, dl:a[0], op:a[1] }; }) : [];
+      const body = makeEelBody(href, full?8:1); root.appendChild(body.g);
+      ctx.eelPose = pose; moveFx(ctx, points, duration);       // estela, burbujas y sonido (van DETRÁS de la ficha)
+      camG.appendChild(root);
+      const t0 = performance.now();
+      const frame = now=>{
+        try{
+          const t = Math.max(0, Math.min(1, (now-t0)/duration)), P = pose(t);
+          body.set(P.x,P.y,P.hd,P.sx,P.sy,P.rot,1.5*P.wv,t*Math.PI*10);
+          ghosts.forEach(G=>{ const Q=pose(t-G.dl), dist=Math.hypot(Q.x-P.x,Q.y-P.y);
+            G.b.set(Q.x,Q.y,Q.hd,Q.sx,Q.sy,Q.rot,0,0); G.b.g.setAttribute("opacity",(G.op*clamp01(dist/10)*(1-clamp01((t-.85)/.15))).toFixed(3)); });
+          if(t<1){ GFX.raf(frame); return; }
+          root.remove(); resolve();
+        }catch(err){ console.error("Arrecife: error en la animación de la Anguila", err); try{ root.remove(); }catch(e2){} resolve(); }
+      };
+      GFX.raf(frame);
+    });
+  }
+  // Estela viscosa que brilla y se disuelve, burbujitas y ondas por donde pasó, y salpicón al acomodarse
+  function eelWakeFx(pose, pts, dur){
+    SFX("mv_anguila");
+    if(GFX.get("trails")){
+      playFxOnce(()=>{
+        const g=el("g",{ class:"fx-overlay" });
+        const glow=el("polyline",{ fill:"none", stroke:"#3d5afe", "stroke-width":10, "stroke-linecap":"round", "stroke-linejoin":"round", opacity:0 });
+        const core=el("polyline",{ fill:"none", stroke:"#9fd4ff", "stroke-width":4, "stroke-linecap":"round", "stroke-linejoin":"round", opacity:0 });
+        g.appendChild(glow); g.appendChild(core);
+        g.__u=t=>{ const tm=Math.min(1,t*1.5), a=Math.max(0,tm-.42), ps=[];
+          for(let i=0;i<=14;i++){ const P=pose(lerp(a,tm,i/14)); ps.push(P.x.toFixed(1)+","+P.y.toFixed(1)); }
+          const s=ps.join(" "), o=t<.66?1:1-(t-.66)/.34;
+          glow.setAttribute("points",s); core.setAttribute("points",s); glow.setAttribute("opacity",.35*o); core.setAttribute("opacity",.55*o); };
+        return g;
+      },(g,t)=>g.__u(t),dur*1.5,"d");
+    }
+    const K=Math.max(3,Math.round(7*GFX.pf()));
+    for(let j=0;j<K;j++){
+      const tm=.15+.6*j/Math.max(1,K-1);
+      setTimeout(()=>{
+        const P=pose(tm), s=5+rn()*4;
+        playFxOnce(()=>el("image",{ href:SPRITES.fx_bubble, x:P.x-s/2, y:P.y-s/2, width:s, height:s, opacity:0, class:"fx-overlay", style:"image-rendering:pixelated;pointer-events:none" }),
+          (n,u)=>{ n.setAttribute("y",P.y-s/2-u*18); n.setAttribute("x",P.x-s/2+Math.sin(u*7+j)*3); n.setAttribute("opacity",.8*(1-u)); },620,"d");
+        if(j%2===0) vRing(P.x,P.y,2,HEX_SIZE*.6,360,"#9fd4ff",2);
+      },dur*tm);
+    }
+    const E=pts[pts.length-1];
+    setTimeout(()=>{
+      SFX("eel_squish");
+      vRing(E.x,E.y,HEX_SIZE*.4,HEX_SIZE*1.45,480,"#7da2ff",3); vRing(E.x,E.y,HEX_SIZE*.2,HEX_SIZE*.95,420,"#d8efff",2,90);
+      const n=Math.max(3,Math.round(8*GFX.pf()));
+      for(let i=0;i<n;i++){ const an=rn()*Math.PI*2, v=12+rn()*16, sz=2.5+rn()*1.5;
+        playFxOnce(()=>el("rect",{ x:E.x, y:E.y, width:sz, height:sz, fill:i%2?"#d8efff":"#7da2ff", class:"fx-overlay" }),
+          (r,u)=>{ r.setAttribute("x",E.x+Math.cos(an)*v*u); r.setAttribute("y",E.y+Math.sin(an)*v*u*.65-8*Math.sin(Math.PI*u)); r.setAttribute("opacity",.95*(1-u)); },420,"d"); }
+    },dur*.8);
+  }
+
   function animatePieceMove(ctx){
+    if(ctx.profile==="eel-slither") return animateEelSlither(ctx);
     return new Promise(resolve=>{
       const camG = document.getElementById("cam");
       if(!camG){ resolve(); return; }
@@ -2328,10 +2453,10 @@ html.gfx-nowater .bg-water::before{ }
       isAnimating = true; state.selectedCell = null; state.moveSubMode = null; hoverKey = null; render();
       const eelTargets = eelAbilityTargets(state.stacks, action.from);
       lastMoveInfo = { type:"eel-stun", species:moverPiece.species, owner:moverPiece.owner, from:action.from, to:action.from, path:[action.from] };
-      try{ spawnEelZap(action.from, eelTargets); }catch(e){ console.error("Arrecife: efecto de la Anguila", e); }
+      let zapMs = 720; try{ const z = spawnEelZap(action.from, eelTargets); if(z) zapMs = z+140; }catch(e){ console.error("Arrecife: efecto de la Anguila", e); }
       let eelDone = false;
       const eelFinish = ()=>{ if(eelDone) return; eelDone = true; isAnimating = false; try{ commitAction(action); }catch(err){ console.error("Arrecife: error en la habilidad de la Anguila", err); render(); } };
-      setTimeout(eelFinish, GFX.get("anim")==="instant" ? 120 : 720); setTimeout(eelFinish, 2500);
+      setTimeout(eelFinish, GFX.get("anim")==="instant" ? 120 : zapMs); setTimeout(eelFinish, 3000);
       return;
     }
     isAnimating = true;
@@ -2412,22 +2537,87 @@ html.gfx-nowater .bg-water::before{ }
     lastActor = null;
     finishTurn();                            // el tablero no cambia; usar la habilidad consume el turno
   }
-  function spawnEelZap(at, targets){
-    const P = vxy(at); SFX("eel_zap");
-    vRing(P.x, P.y, HEX_SIZE*.5, HEX_SIZE*2.2, 520, "#9fd4ff", 3);
-    targets.forEach((k,i)=>{
-      const Q = vxy(k), dx = Q.x-P.x, dy = Q.y-P.y, len = Math.hypot(dx,dy)||1, nx = -dy/len, ny = dx/len;
-      const pts = [0,.2,.4,.6,.8,1].map((f,j)=>{ const o = (j===0||j===5) ? 0 : (Math.random()-.5)*HEX_SIZE*.9; return (P.x+dx*f+nx*o).toFixed(1)+","+(P.y+dy*f+ny*o).toFixed(1); }).join(" ");
+  // Anguila — habilidad: se carga, se infla como gelatina y suelta una onda eléctrica que se expande a su alrededor.
+  // Cada pieza rival aturdida se electrocuta justo cuando el frente de la onda la toca. Devuelve la duración (ms).
+  function eelElectrocute(k, delay, ms){
+    setTimeout(()=>{
+      const Q=vxy(k); SFX("eel_hit");
+      vRing(Q.x,Q.y,HEX_SIZE*.4,HEX_SIZE*1.5,ms*.7,"#7dd3ff",3);
+      const cs=[0,1,2,3,4,5].map(i=>({ x:Q.x+HEX_SIZE*Math.cos(Math.PI/3*i), y:Q.y+HEX_SIZE*Math.sin(Math.PI/3*i) }));
       playFxOnce(()=>{
-        const g = el("g",{ class:"fx-overlay" });
-        const glow = el("polyline",{ points:pts, fill:"none", stroke:"#3d5afe", "stroke-width":8, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:0 });
-        const bolt = el("polyline",{ points:pts, fill:"none", stroke:"#d8efff", "stroke-width":3, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:0 });
-        g.appendChild(glow); g.appendChild(bolt);
-        g.__u = t=>{ const f = Math.sin(Math.PI*Math.min(1,t*1.1)); glow.setAttribute("opacity",.55*f); bolt.setAttribute("opacity",.95*f); };
+        const g=el("g",{ class:"fx-overlay" });
+        const fl=el("polygon",{ points:hexCorners(Q.x,Q.y,HEX_SIZE), fill:"#cfe9ff", opacity:0 });
+        const ed=el("polygon",{ points:hexCorners(Q.x,Q.y,HEX_SIZE-1), fill:"none", stroke:"#e8f6ff", "stroke-width":2.5, opacity:0 });
+        const bs=[0,1,2].map(()=>el("path",{ fill:"none", stroke:"#ffffff", "stroke-width":1.8, "stroke-linecap":"round", "stroke-linejoin":"round", opacity:0 }));
+        [fl,ed].concat(bs).forEach(n=>g.appendChild(n));
+        let lb=-1;
+        g.__u=t=>{
+          const env=1-t, on=(Math.floor(t*(ms/45))%2===0);
+          fl.setAttribute("opacity",on?.5*env+.1:0); ed.setAttribute("opacity",on?0:.9*env);
+          if(t-lb>.07){ lb=t; bs.forEach(b=>b.setAttribute("d",vBolt(cs[Math.floor(rn()*6)],cs[Math.floor(rn()*6)],5,10))); }
+          bs.forEach(b=>b.setAttribute("opacity",.95*env));
+          vSetT(k, t>=1 ? null : "translate("+((rn()-.5)*5*env).toFixed(1)+" "+((rn()-.5)*3*env).toFixed(1)+")");     // la pieza se sacude
+        };
         return g;
-      }, (g,t)=>g.__u(t), 520);
-      setTimeout(()=>{ vRing(Q.x, Q.y, HEX_SIZE*.4, HEX_SIZE*1.4, 420, "#7dd3ff", 3); if(i===0) SFX("stun"); }, 150+i*40);
+      },(g,t)=>g.__u(t),ms);
+      const n=Math.max(3,Math.round(7*GFX.pf()));
+      for(let i=0;i<n;i++){ const an=rn()*Math.PI*2, v=14+rn()*18;
+        playFxOnce(()=>el("rect",{ x:Q.x, y:Q.y, width:3.5, height:3.5, fill:i%2?"#ffffff":"#7dd3ff", class:"fx-overlay" }),
+          (r,u)=>{ r.setAttribute("x",Q.x+Math.cos(an)*v*u); r.setAttribute("y",Q.y+Math.sin(an)*v*u*.65-10*Math.sin(Math.PI*u)); r.setAttribute("opacity",.95*(1-u)); },ms*.75,"d"); }
+      setTimeout(()=>vPop(Q.x-8,Q.y-8),ms*.45); setTimeout(()=>vPop(Q.x+9,Q.y-12),ms*.6);
+    },delay||0);
+  }
+  function spawnEelZap(at, targets){
+    const P=vxy(at), lite=GFX.get("anim")==="instant", D=Math.round((lite?520:1150)*GFX.animK()), eMs=Math.round((lite?300:640)*GFX.animK());
+    if(lite){ SFX("eel_zap"); vRing(P.x,P.y,HEX_SIZE*.5,HEX_SIZE*2.4,420,"#9fd4ff",3); targets.forEach((k,i)=>eelElectrocute(k,i*20,eMs)); return D; }
+    const me=topOf(at), TC=.22, TE=.8, R0=HEX_SIZE*.5, R1=HEX_SIZE*2.7, dist=targets.map(k=>{ const Q=vxy(k); return Math.hypot(Q.x-P.x,Q.y-P.y); }), hit=targets.map(()=>false);
+    SFX("eel_charge"); setTimeout(()=>{ SFX("eel_zap"); vShake(vBoard(),3,200); },D*TC);
+    vHide(at,D+80);
+    vRun(D,g=>{
+      vGlow(g);
+      const mk=(tag,a)=>{ const n=el(tag,Object.assign({ class:"fx-overlay" },a)); g.appendChild(n); return n; };
+      const aura=mk("circle",{ cx:P.x, cy:P.y, r:HEX_SIZE, fill:"#4a6bff", filter:"url(#vglow)", opacity:0 });
+      const gh=me ? vGhost(g,{ C:P, sp:me.species, owner:me.owner }) : null;
+      const fl=mk("polygon",{ points:hexCorners(P.x,P.y,HEX_SIZE), fill:"#ffffff", opacity:0 });
+      const rg=mk("path",{ fill:"none", stroke:"#3d5afe", "stroke-width":9, "stroke-linejoin":"round", filter:"url(#vglow)", opacity:0 });
+      const rc=mk("path",{ fill:"none", stroke:"#e4f4ff", "stroke-width":2.6, "stroke-linejoin":"round", opacity:0 });
+      const r2=mk("path",{ fill:"none", stroke:"#7dd3ff", "stroke-width":1.6, "stroke-linejoin":"round", opacity:0 });
+      const cr=Array.from({length:10},()=>mk("path",{ fill:"none", stroke:"#ffffff", "stroke-width":1.5, "stroke-linecap":"round", "stroke-linejoin":"round", opacity:0 }));
+      const sq=Array.from({length:22},()=>({ n:mk("rect",{ width:3.5, height:3.5, fill:"#d8efff", opacity:0 }), a:0, r0:0, r1:0, b:-1, life:.1 }));
+      let last=-1, si=0;
+      const spark=(t,r0,r1,life)=>{ const o=sq[si++%sq.length]; o.a=rn()*Math.PI*2; o.r0=r0; o.r1=r1; o.b=t; o.life=life; };
+      return t=>{
+        const pulse=(Math.sin(t*Math.PI*18)+1)/2, tick=(t-last>.03);
+        if(tick) last=t;
+        if(t<TC){                                                                  // carga: se comprime, tiembla y atrae chispas
+          const u=t/TC;
+          if(gh) gh.set((rn()-.5)*2.4*u,(rn()-.5)*1.8*u,1-.13*u,1-.13*u);
+          aura.setAttribute("r",HEX_SIZE*(.7+.9*u)*(1+.08*pulse)); aura.setAttribute("opacity",.55*u);
+          if(tick){ spark(t,HEX_SIZE*1.8,HEX_SIZE*.2,.09); spark(t,HEX_SIZE*1.8,HEX_SIZE*.2,.09); }
+        } else {                                                                   // descarga: pop gelatinoso + onda que se expande
+          const q=(t-TC)*D/1000, w=clamp01((t-TC)/(TE-TC)), s=1+.3*Math.exp(-q*12)*Math.cos(q*40);
+          if(gh) gh.set(0,0,s,1-(s-1)*.7);
+          aura.setAttribute("r",HEX_SIZE*(1.6+.5*w)); aura.setAttribute("opacity",.55*(1-w));
+          fl.setAttribute("opacity",.75*(1-clamp01((t-TC)/.07)));
+          const R=lerp(R0,R1,easeOutCubic(w)), fade=1-w*w;
+          if(w<1){
+            if(tick){
+              const d1=vJRing(P,R,32,4.5); rg.setAttribute("d",d1); rc.setAttribute("d",d1); r2.setAttribute("d",vJRing(P,R*.74,26,6));
+              cr.forEach(b=>{ const a=rn()*Math.PI*2, c=Math.cos(a), sn=Math.sin(a), r=R-7, r2_=R+8+rn()*6;
+                b.setAttribute("d",vBolt({x:P.x+c*r,y:P.y+sn*r},{x:P.x+Math.cos(a+(rn()-.5)*.3)*r2_,y:P.y+Math.sin(a+(rn()-.5)*.3)*r2_},4,6)); });
+              spark(t,R,R+24,.1); spark(t,R,R+24,.1); spark(t,R,R+24,.1);
+            }
+            rg.setAttribute("opacity",.6*fade); rc.setAttribute("opacity",.95*fade); r2.setAttribute("opacity",.6*(1-w));
+            cr.forEach(b=>b.setAttribute("opacity",.9*fade));
+          } else [rg,rc,r2].concat(cr).forEach(n=>n.setAttribute("opacity",0));
+          targets.forEach((k,i)=>{ if(!hit[i] && (R>=dist[i]-3 || t>=TE)){ hit[i]=true; eelElectrocute(k,i*28,eMs); } });   // se electrocutan al tocarlas la onda
+        }
+        sq.forEach(o=>{ const p=(t-o.b)/o.life;
+          if(o.b<0||p<0||p>1){ o.n.setAttribute("opacity",0); return; }
+          const r=lerp(o.r0,o.r1,p); o.n.setAttribute("x",P.x+Math.cos(o.a)*r-1.7); o.n.setAttribute("y",P.y+Math.sin(o.a)*r-1.7); o.n.setAttribute("opacity",.95*Math.sin(Math.PI*Math.min(1,p*.9+.05))); });
+      };
     });
+    return D;
   }
 
   let flashIllegalKey = null;
@@ -3139,6 +3329,78 @@ html.gfx-nowater .bg-water::before{ }
   const vJRing = (p,r,n,j) => { let d=""; for(let i=0;i<=n;i++){ const a=i/n*Math.PI*2, rr=r+(rn()-.5)*j; d+=(i?" L":"M")+(p.x+Math.cos(a)*rr).toFixed(1)+" "+(p.y+Math.sin(a)*rr).toFixed(1); } return d+"Z"; };
 
   const VICT = {
+    // 0. Anguila — Cortocircuito: se carga, da una vuelta serpenteando alrededor de la Reina dejando un cable eléctrico,
+    //    cierra el circuito (apagón), el anillo se contrae y cae un rayo; la onda de choque recorre todo el arrecife.
+    anguila(c){
+      const D=3250, TS=.7, Q=c.Q, full=GFX.get("anim")==="full";
+      vHide(c.k,D+60);
+      const rho=Math.hypot(c.C.x-Q.x,c.C.y-Q.y)||HEX_SIZE*Math.sqrt(3), a0=Math.atan2(c.C.y-Q.y,c.C.x-Q.x), TAU=Math.PI*2;
+      const ring=neighborKeys(c.qk).filter(k=>k!==c.k&&topOf(k)).map(k=>{ const p=vxy(k); let da=Math.atan2(p.y-Q.y,p.x-Q.x)-a0; da=((da%TAU)+TAU)%TAU; return { k, p, da, done:false }; });
+      const all=Object.keys(state.stacks).filter(k=>k!==c.k&&k!==c.qk).map(k=>{ const p=vxy(k); return { k, p, d:Math.hypot(p.x-Q.x,p.y-Q.y), own:!!(topOf(k)&&topOf(k).owner===c.owner), done:false }; });
+      const hop=(k,h)=>vCam()&&vCam().querySelectorAll('image[data-hitkey="'+k+'"]').forEach(i=>!i.classList.contains("fx-overlay")&&i.animate&&i.animate([{transform:"translateY(0)"},{transform:"translateY(-"+h+"px)"},{transform:"translateY(0)"}],{duration:440,easing:"ease-out"}));
+      vRun(D,g=>{
+        vGlow(g);
+        const mk=(tag,a)=>{ const n=el(tag,Object.assign({ class:"fx-overlay" },a)); g.appendChild(n); return n; };
+        const dark=mk("rect",{ x:-3000, y:-3000, width:6000, height:6000, fill:"#020a24", opacity:0 });
+        const aura=mk("circle",{ cx:Q.x, cy:Q.y, r:HEX_SIZE*1.2, fill:"#4a6bff", filter:"url(#vglow)", opacity:0 });
+        const wg=mk("path",{ fill:"none", stroke:"#3d5afe", "stroke-width":9, "stroke-linejoin":"round", "stroke-linecap":"round", filter:"url(#vglow)", opacity:0 });
+        const wc=mk("path",{ fill:"none", stroke:"#e4f4ff", "stroke-width":2.6, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:0 });
+        const sh=[0,1].map(()=>({ g:mk("path",{ fill:"none", stroke:"#3d5afe", "stroke-width":8, "stroke-linejoin":"round", filter:"url(#vglow)", opacity:0 }), c:mk("path",{ fill:"none", stroke:"#e4f4ff", "stroke-width":2.4, "stroke-linejoin":"round", opacity:0 }) }));
+        const pg=mk("path",{ fill:"none", stroke:"#3d5afe", "stroke-width":16, "stroke-linejoin":"round", filter:"url(#vglow)", opacity:0 });
+        const pc=mk("path",{ fill:"none", stroke:"#ffffff", "stroke-width":4.5, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:0 });
+        const pd=mk("path",{ fill:"none", stroke:"#bfe4ff", "stroke-width":2, "stroke-linejoin":"round", opacity:0 });
+        const eb=makeEelBody(skinSrc(c.sp,c.owner), full?8:1); g.appendChild(eb.g);
+        const flash=mk("rect",{ x:-3000, y:-3000, width:6000, height:6000, fill:"#ffffff", opacity:0 });
+        const emb=Array.from({length:30},()=>({ n:mk("rect",{ width:3.5, height:3.5, fill:rn()<.5?"#d8efff":"#7da2ff", opacity:0 }), a:rn()*TAU, r:HEX_SIZE*(.4+rn()*1.8), ph:rn() }));
+        let last=-1, struck=false, qClear=false, dk=1, wp=[], pillar=[0,0];
+        return t=>{
+          const tick=(t-last>.025); if(tick) last=t;
+          const sec=t*D/1000, op=clamp01((t-.10)/.52), eo=vE(op), th=TAU*eo, env=Math.sin(Math.PI*op);
+          // apagón: las luces se van apagando durante la vuelta, parpadean y vuelven tras el rayo
+          if(tick&&t>.25&&t<TS) dk=rn()<.22?.65:1; else if(t>=TS||t<=.25) dk=1;
+          dark.setAttribute("opacity",(t<TS?.6*vE(clamp01(t/.5)):.6*(1-vE(clamp01((t-TS)/.3))))*dk);
+          // la Anguila: se carga, orbita serpenteando, vibra esperando y revienta con el rayo
+          let X=c.C.x, Y=c.C.y, hd=0, sx=1, sy=1, rot=0, amp=2.4;
+          if(t<.10){ const u=easeOutCubic(t/.10); sx=1-.14*u; sy=1+.12*u; X+=(rn()-.5)*2*u; Y+=(rn()-.5)*1.5*u; amp=3*u; }
+          else if(t<.62){ const r=rho+6*Math.sin(th*3)*env, a=a0+th; X=Q.x+Math.cos(a)*r; Y=Q.y+Math.sin(a)*r; hd=a+Math.PI/2; sx=1+.3*env; sy=1/Math.sqrt(sx); rot=.22*Math.cos(th*3)*env; amp=3.4; }
+          else if(t<TS){ sx=1.04; sy=.96; X+=(rn()-.5)*2.4; Y+=(rn()-.5)*1.8; amp=3; }
+          else { const w=Math.exp(-(t-TS)*D/1000*6)*Math.cos((t-TS)*D/1000*34); sx=1+.34*w; sy=1-.3*w; amp=3*Math.exp(-(t-TS)*D/1000*3); }
+          eb.set(X,Y,hd,sx,sy,rot,amp,sec*Math.PI*10);
+          // cable eléctrico que deja a su paso; al cerrarse el anillo se contrae hacia la Reina
+          const sc=t<.62?1:1-easeInCubic(clamp01((t-.62)/(TS-.62)));
+          if(tick&&t>=.10&&t<TS){
+            const n=Math.max(2,Math.round(70*eo)); wp=[];
+            for(let i=0;i<=n;i++){ const a=a0+th*i/n, r=rho*sc+(rn()-.5)*5*sc; wp.push((Q.x+Math.cos(a)*r).toFixed(1)+" "+(Q.y+Math.sin(a)*r).toFixed(1)); }
+            const d="M"+wp.join(" L")+(op>=1?"Z":""); wg.setAttribute("d",d); wc.setAttribute("d",d);
+          }
+          const wo=t<.10?0:t<TS?1:0, pl=.8+.2*Math.sin(t*Math.PI*30); wg.setAttribute("opacity",.65*wo*pl); wc.setAttribute("opacity",.95*wo);
+          // aura y temblor creciente de la Reina
+          const ch=clamp01((t-.2)/(TS-.2));
+          aura.setAttribute("r",HEX_SIZE*(.8+.9*ch)*(1+.06*Math.sin(t*60))); aura.setAttribute("opacity",t<TS?.5*ch*ch:.5*(1-clamp01((t-TS)/.2)));
+          if(t<TS) vSetT(c.qk,"translate("+((rn()-.5)*(.6+3*ch*ch)).toFixed(1)+" "+((rn()-.5)*(.5+2*ch*ch)).toFixed(1)+")");
+          else if(t<.9){ const e=1-(t-TS)/.2; vSetT(c.qk,e>0?"translate("+((rn()-.5)*10*e).toFixed(1)+" "+((rn()-.5)*6*e).toFixed(1)+")":null); }
+          else if(!qClear){ qClear=true; vSetT(c.qk,null); }
+          // las fichas vecinas se cargan cuando la Anguila pasa por encima
+          ring.forEach(o=>{ if(!o.done&&t>=.10&&t<.62&&th>=o.da){ o.done=true; hop(o.k,9); vPop(o.p.x,o.p.y-14); vRing(o.p.x,o.p.y,4,HEX_SIZE*1.2,380,"#7da2ff",2); } });
+          // el rayo cae sobre la Reina
+          if(t>=TS&&!struck){ struck=true; vShake(vBoard(),11,560); vRing(Q.x,Q.y,6,HEX_SIZE*2.5,600,"#ffffff",5); ring.forEach(o=>{ hop(o.k,13); }); for(let i=0;i<5;i++) setTimeout(()=>vPop(Q.x+(rn()-.5)*50,Q.y+(rn()-.5)*30),i*60); }
+          const pf=t<TS?0:clamp01(1-(t-TS)/.14);
+          if(pf>0){ if(tick){ const top={ x:Q.x+(rn()-.5)*40, y:Q.y-520 }; pillar=[vBolt(top,Q,16,30),vBolt(top,Q,14,36)]; }
+            pg.setAttribute("d",pillar[0]); pc.setAttribute("d",pillar[0]); pd.setAttribute("d",pillar[1]); }
+          pg.setAttribute("opacity",.7*pf); pc.setAttribute("opacity",pf); pd.setAttribute("opacity",.9*pf);
+          flash.setAttribute("opacity",t<TS?0:.85*(1-clamp01((t-TS)/.07)));
+          // onda de choque que recorre todo el arrecife: cada pieza salta al pasar el frente
+          const sp=clamp01((t-TS)/.24), Rs=HEX_SIZE*8*easeOutCubic(sp);
+          sh.forEach((o,i)=>{ const R=Rs*(i?.8:1), on=t>=TS&&sp<1;
+            if(on&&tick){ const d=vJRing(Q,R,44,i?8:6); o.g.setAttribute("d",d); o.c.setAttribute("d",d); }
+            o.g.setAttribute("opacity",on?.6*(1-sp):0); o.c.setAttribute("opacity",on?.95*(1-sp):0); });
+          if(t>=TS) all.forEach(o=>{ if(!o.done&&Rs>=o.d){ o.done=true; hop(o.k,8); if(o.own) vPop(o.p.x,o.p.y-14); } });
+          emb.forEach(e=>{ const p=((t-TS)*1.4+e.ph)%1, fd=t<TS?0:1-clamp01((t-TS)/.3);
+            e.n.setAttribute("x",Q.x+Math.cos(e.a+p*3)*e.r); e.n.setAttribute("y",Q.y-p*64+Math.sin(e.a)*e.r*.4); e.n.setAttribute("opacity",Math.sin(Math.PI*p)*fd); });
+          if(t>=1) vSetT(c.qk,null);
+        };
+      });
+    },
     // 1. Tiburón — Frenesí de Caza
     tiburon(c){
       vHide(c.k,1350);
@@ -3484,7 +3746,9 @@ html.gfx-nowater .bg-water::before{ }
     if(ctx.species==="pulpo" && imit && imit!=="pulpo") vImitate(ctx.path[0], imit);
     if(act.type==="climb" || act.type==="lobster-ability") return;                 // tienen su propia animación
     const eff = cat==="jump"?"mantarraya" : cat==="hop"?"caballito" : cat==="lobsterMove"?"langosta" : cat==="eelMove"?"anguila" : (act.sourceSpecies||ctx.species);
-    if(eff==="anguila"){ SFX("mv_anguila"); const E=pts[pts.length-1]; setTimeout(()=>{ SFX("land"); vRing(E.x,E.y,HEX_SIZE*.4,HEX_SIZE*1.3,420,"#7da2ff",3); },dur); return; }
+    if(eff==="anguila"){
+      if(ctx.eelPose){ eelWakeFx(ctx.eelPose, pts, dur); return; }
+      SFX("mv_anguila"); const E=pts[pts.length-1]; setTimeout(()=>{ SFX("land"); vRing(E.x,E.y,HEX_SIZE*.4,HEX_SIZE*1.3,420,"#7da2ff",3); },dur); return; }
     const kind = { tiburon:"foam", cangrejo:"dust", caballito:"coral", medusa:"glow", mantarraya:"splash", langosta:"sand", tortuga:"ripple" }[eff]; if(!kind) return;
     const over=cam.lastChild, D=dur*1.6, n=Math.max(1,pts.length-1), a=pts[0], b=pts[pts.length-1], ev={};
     const parts=[]; let next=0, ms=0, G=null;
@@ -3612,7 +3876,7 @@ html.gfx-nowater .bg-water::before{ }
 
   // ================= Fin de partida: el tablero se atenúa y aparece un resumen deslizándose =================
   const VNAME = { anguila:"Anguila", tortuga:"Tortuga Reina", mantarraya:"Mantarraya", langosta:"Langosta", cangrejo:"Cangrejo", caballito:"Caballito de Mar", medusa:"Medusa", tiburon:"Tiburón", pulpo:"Pulpo" };
-  const VDUR = { anguila:1400, tiburon:1300, medusa:2400, pulpo:3600, mantarraya:1900, langosta:1400, cangrejo:2000, caballito:2300, tortuga:2800 };
+  const VDUR = { anguila:3400, tiburon:1300, medusa:2400, pulpo:3600, mantarraya:1900, langosta:1400, cangrejo:2000, caballito:2300, tortuga:2800 };
   let vSumTimers = [];
   function vHideSummary(){ vSumTimers.forEach(clearTimeout); vSumTimers=[]; document.body.classList.remove("sum-dim-on","sum-on"); }
   function vScheduleSummary(actor){
