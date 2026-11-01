@@ -902,6 +902,95 @@ html.gfx-nowater .bg-water::before{ }
 <script>/* Almeja: true = aparece en el juego; false = oculta (mecánica y sprites provisorios incluidos) */ window.ARRECIFE_ALMEJA = true;</script>
 <script>/* Pez Koi: true = aparece en el juego; false = oculto (mecánica y sprite provisorio incluidos) */ window.ARRECIFE_KOI = true;</script>
 <script>/* Anémona: true = aparece en el juego; false = oculta (mecánica y sprite provisorio incluidos) */ window.ARRECIFE_ANEMONA = true;</script>
+<script>
+/* ===== El Arrecife · reglas del Deck Builder (módulo puro, sin DOM) =====
+   Para agregar una Legendaria: escribe su clave en la categoría "legendaria" (species:[...]) y define la especie en el juego
+   (SPECIES + sprites). No hay que tocar nada más: el constructor, la validación, la IA y el online la recogen solos.
+   Una categoría sin especies disponibles no exige nada (por eso hoy el mazo suma 18 y, con una Legendaria, sumará 19). */
+(function(root){
+  "use strict";
+  var CATEGORIES = [
+    { id:"obligatoria", label:"Obligatoria", picks:1, copies:1, auto:true, species:["tortuga"] },
+    { id:"comun",       label:"Común",       picks:3, copies:3, species:["cangrejo","mantarraya","anemona"] },
+    { id:"rara",        label:"Rara",        picks:3, copies:2, species:["caballito","tiburon","almeja","medusa"] },
+    { id:"epica",       label:"Épica",       picks:2, copies:1, species:["pulpo","linterna","langosta","anguila","koi"] },
+    { id:"legendaria",  label:"Legendaria",  picks:1, copies:1, species:[] }
+  ];
+  var avail = null, names = {};
+  function has(s){ return !avail || avail.indexOf(s) >= 0; }
+  function setAvailable(list, nameMap){ avail = list.slice(); names = nameMap || {}; }
+  function name(s){ return names[s] || s; }
+  function categories(){
+    return CATEGORIES.map(function(c){
+      var p = c.species.filter(has);
+      return { id:c.id, label:c.label, picks:c.picks, copies:c.copies, auto:!!c.auto, pool:p, need:Math.min(c.picks, p.length) };
+    });
+  }
+  function total(){ return categories().reduce(function(n,c){ return n + c.need*c.copies; }, 0); }
+  function sanitize(choice){
+    var out = {};
+    categories().forEach(function(c){
+      var src = (choice && Array.isArray(choice[c.id])) ? choice[c.id] : [], seen = [];
+      src.forEach(function(s){ if(c.pool.indexOf(s) >= 0 && seen.indexOf(s) < 0 && seen.length < c.need) seen.push(s); });
+      out[c.id] = c.auto ? c.pool.slice(0, c.need) : seen;
+    });
+    return out;
+  }
+  function status(choice){
+    var ch = sanitize(choice), ok = true, per = {}, pieces = 0;
+    categories().forEach(function(c){
+      var have = ch[c.id].length; per[c.id] = { have:have, need:c.need, ok:have === c.need };
+      if(have !== c.need) ok = false; pieces += have*c.copies;
+    });
+    return { choice:ch, per:per, ok:ok, pieces:pieces };
+  }
+  /** Elección de especies -> mazo final { especie: copias } (null si falta algo). Aquí se inyectan las copias. */
+  function build(choice){
+    var st = status(choice); if(!st.ok) return null;
+    var deck = {};
+    categories().forEach(function(c){ st.choice[c.id].forEach(function(s){ deck[s] = c.copies; }); });
+    return deck;
+  }
+  function choiceFromDeck(deck){
+    var out = {};
+    categories().forEach(function(c){ out[c.id] = c.pool.filter(function(s){ return deck && deck[s] > 0; }); });
+    return sanitize(out);
+  }
+  function validateDeck(deck){
+    if(!deck || typeof deck !== "object" || Array.isArray(deck)) return false;
+    var known = [], C = categories();
+    CATEGORIES.forEach(function(c){ c.species.forEach(function(s){ known.push(s); }); });
+    for(var k in deck){
+      if(!Object.prototype.hasOwnProperty.call(deck,k)) continue;
+      var n = deck[k];
+      if(known.indexOf(k) < 0 || typeof n !== "number" || n % 1 !== 0 || n < 0 || n > 9) return false;
+      if(n > 0 && !has(k)) return false;
+    }
+    for(var i=0;i<C.length;i++){
+      var picked = C[i].pool.filter(function(s){ return deck[s] > 0; });
+      if(picked.length !== C[i].need) return false;
+      for(var j=0;j<picked.length;j++) if(deck[picked[j]] !== C[i].copies) return false;
+    }
+    return true;
+  }
+  function normalizeDeck(deck){
+    var out = {};
+    CATEGORIES.forEach(function(c){ c.species.filter(has).forEach(function(s){ out[s] = deck[s] > 0 ? deck[s] : 0; }); });
+    return out;
+  }
+  function random(){
+    var ch = {};
+    categories().forEach(function(c){
+      var p = c.pool.slice();
+      for(var i=p.length-1;i>0;i--){ var j = Math.floor(Math.random()*(i+1)), t = p[i]; p[i] = p[j]; p[j] = t; }
+      ch[c.id] = p.slice(0, c.need);
+    });
+    return build(ch);
+  }
+  root.ArrecifeDeck = { categories:categories, total:total, sanitize:sanitize, status:status, build:build, choiceFromDeck:choiceFromDeck,
+    validateDeck:validateDeck, normalizeDeck:normalizeDeck, random:random, setAvailable:setAvailable, name:name };
+})(window);
+</script>
 <style>
   .acct-tabs{ display:flex; gap:8px; margin:6px 0 10px; }
   .acct-tabs button{ flex:1; padding:8px 4px; background:var(--panel); color:var(--ink); border:1px solid var(--panel-line); border-radius:10px; font-family:var(--font-body); cursor:pointer; }
@@ -1007,6 +1096,27 @@ html.gfx-nowater .bg-water::before{ }
 .topbar-actions .icon-btn{ padding:calc(1.5*var(--pu)) calc(1*var(--pu)); font-size:8px; }
 @media (max-width:520px){ .topbar-actions .icon-btn .tx{ display:none; } .topbar-actions #btn-sound{ flex:1 1 0; } }
 @media (min-width:521px) and (orientation:landscape) and (min-height:561px){ .piece-btn{ min-height:54px; } }
+</style>
+<style>
+  .modal.deck{ max-width:560px; width:100%; }
+  .deck .dk-head{ display:flex; align-items:center; justify-content:center; gap:10px; }
+  .deck .dk-head img{ width:34px; height:30px; image-rendering:pixelated; image-rendering:crisp-edges; }
+  .deck .dk-sub{ text-align:center; margin:4px 0 6px; }
+  .dk-cat{ margin:10px 0; padding:8px; border:1px solid var(--panel-line); }
+  .dk-cat header{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:9px; margin-bottom:8px; color:var(--ink-dim); }
+  .dk-cat header b{ color:var(--teal); font-weight:400; }
+  .dk-cat.ok header span{ color:#7CE08A; }
+  .dk-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:6px; }
+  .dk-sp{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 2px; background:rgba(255,255,255,.05); border:2px solid var(--panel-line); border-radius:8px; color:var(--ink); font-family:var(--font-body); font-size:7px; line-height:1.3; text-align:center; cursor:pointer; }
+  .dk-sp img{ width:34px; height:30px; image-rendering:pixelated; image-rendering:crisp-edges; }
+  .dk-sp i{ font-style:normal; color:var(--ink-dim); font-size:8px; }
+  .dk-sp.on{ border-color:var(--gold); background:rgba(255,202,40,.18); }
+  .dk-sp:disabled{ cursor:default; }
+  .dk-sp:disabled:not(.on){ opacity:.35; cursor:not-allowed; }
+  .dk-soon{ margin:0; text-align:center; }
+  .dk-sum{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin:10px 0 0; font-size:9px; flex-wrap:wrap; }
+  .dk-sum #dk-hint{ color:var(--gold); }
+  .deck .modal-actions{ flex-wrap:wrap; }
 </style>
 </head>
 <body>
@@ -1208,6 +1318,13 @@ html.gfx-nowater .bg-water::before{ }
   </div>
   <div class="modal-actions"><button class="mghost" id="setup-cancel">Cancelar</button><button class="btn-primary" id="setup-go">¡A jugar!</button></div>
 </div></div>
+<div class="modal-backdrop" id="deck-modal"><div class="modal deck" role="dialog" aria-labelledby="dk-title">
+  <div class="dk-head"><img id="dk-badge" alt=""><h2 id="dk-title" style="margin:0">Arma tu mazo</h2></div>
+  <p class="dk-sub" id="dk-sub"></p>
+  <div id="dk-body"></div>
+  <div class="dk-sum"><span id="dk-count">0 / 0 piezas</span><span id="dk-hint"></span></div>
+  <div class="modal-actions"><button class="mghost" id="dk-cancel" type="button">Cancelar</button><button class="mghost" id="dk-random" type="button">Al azar</button><button class="btn-primary" id="dk-go" type="button" disabled>Confirmar mazo</button></div>
+</div></div>
 <div class="toast" id="toast"></div>
 <div id="gfx-fps" aria-hidden="true"></div><div id="gfx-snack" role="status" aria-live="polite"></div>
 <div class="modal-backdrop" id="net-modal"><div class="modal" style="text-align:center">
@@ -1222,6 +1339,9 @@ html.gfx-nowater .bg-water::before{ }
 
     <h3>Introducción</h3>
     <p>El Arrecife no necesita tablero. Está compuesto por <span id="help-total">44</span> piezas (<span id="help-per">22</span> blancas y <span id="help-per2">22</span> negras) que muestran una variedad de animales acuáticos con movimientos únicos. El juego comienza cuando se coloca la primera pieza, y a medida que se van colocando las demás, se forma un grupo de piezas llamado "el arrecife". Las piezas nunca son eliminadas y no es necesario jugarlas todas para ganar.</p>
+
+    <h3>Tu mazo</h3>
+    <p>Antes de cada partida armas tu mazo eligiendo especies, no piezas sueltas: la Tortuga Reina entra sola, y de cada rareza eliges un número fijo de especies (3 Comunes con 3 copias, 3 Raras con 2 copias, 2 Épicas con 1 copia y, cuando existan, 1 Legendaria). La partida no empieza hasta que tu mazo está completo.</p>
 
     <h3>Objetivo</h3>
     <p>El objetivo del juego es rodear por completo la Tortuga Reina del oponente, mientras evitas que tu oponente haga lo mismo con la tuya. La Tortuga Reina puede estar rodeada por piezas de ambos jugadores.</p>
@@ -1250,7 +1370,7 @@ html.gfx-nowater .bg-water::before{ }
     <p id="help-koi"><strong>Pez Koi:</strong> En su turno puede o moverse o usar su habilidad. Si decide moverse, avanza 1 o 2 espacios deslizándose alrededor del arrecife. Si decide usar su habilidad, «Intercambio», selecciona cualquier pieza adyacente, aliada o rival (excepto las Tortugas Reina), e intercambia su posición exacta con ella.</p>
     <p><strong>Langosta:</strong> En su turno puede o moverse o usar su habilidad. Si decide moverse, avanza 1 espacio alrededor del arrecife. Si decide usar su habilidad, «Tenaza», puede reubicar cualquier pieza adyacente directamente hacia el otro lado de la Langosta, siempre y cuando ese espacio esté vacío.</p>
     <p id="help-anemona"><strong>Anémona:</strong> No tiene habilidades activas y no puede moverse por sí sola (solo otras piezas pueden trasladarla con sus habilidades). Su efecto pasivo atrapa a cualquier pieza, aliada o rival: si en su trayecto una pieza entra a un espacio adyacente a la Anémona, debe detener su movimiento ahí. Y si una pieza empieza su movimiento ya junto a ella, solo podrá avanzar un máximo de un espacio. Si una Medusa se sube sobre la Anémona, su efecto queda anulado mientras esté tapada.</p>
-    <p id="help-almeja"><strong>Almeja:</strong> Es inmóvil: no puede moverse por sí sola y solo puede ser trasladada por los efectos de otras piezas (por ejemplo la «Tenaza» de la Langosta o el «Señuelo» del Pez Linterna). En su turno puede usar su habilidad, «Abrir almeja», que tiene 1 de 2 probabilidades de revelar una perla en su interior. Mientras la perla esté expuesta, cualquier pieza, aliada o rival, que termine su movimiento en un espacio adyacente a la Almeja consume la perla automáticamente y su jugador obtiene un movimiento adicional inmediato, solo con esa misma pieza (no se puede colocar ni mover otra). Cada jugador tiene dos Almejas.</p>
+    <p id="help-almeja"><strong>Almeja:</strong> Es inmóvil: no puede moverse por sí sola y solo puede ser trasladada por los efectos de otras piezas (por ejemplo la «Tenaza» de la Langosta o el «Señuelo» del Pez Linterna). En su turno puede usar su habilidad, «Abrir almeja», que tiene 1 de 2 probabilidades de revelar una perla en su interior. Mientras la perla esté expuesta, cualquier pieza, aliada o rival, que termine su movimiento en un espacio adyacente a la Almeja consume la perla automáticamente y su jugador obtiene un movimiento adicional inmediato, solo con esa misma pieza (no se puede colocar ni mover otra). Cada mazo que la incluye lleva dos Almejas.</p>
 
     <div class="modal-actions">
       <button class="btn-primary" id="help-close">Entendido</button>
@@ -1521,8 +1641,9 @@ html.gfx-nowater .bg-water::before{ }
     anemona:   { name:"Anémona",          color:"#BF90DF", base:3, icon:iconAnemone }
   };
   const SPECIES_ORDER = ["tortuga","mantarraya","langosta","cangrejo","caballito","medusa","tiburon","pulpo"].concat(window.ARRECIFE_ANGUILA ? ["anguila"] : []).concat(window.ARRECIFE_LINTERNA ? ["linterna"] : []).concat(window.ARRECIFE_ALMEJA ? ["almeja"] : []).concat(window.ARRECIFE_KOI ? ["koi"] : []).concat(window.ARRECIFE_ANEMONA ? ["anemona"] : []);
+  ArrecifeDeck.setAvailable(SPECIES_ORDER, Object.fromEntries(SPECIES_ORDER.map(k => [k, SPECIES[k].name])));
   document.documentElement.style.setProperty("--nsp", SPECIES_ORDER.length);
-  { const per = SPECIES_ORDER.reduce((n,k)=>n+SPECIES[k].base,0); [["help-per",per],["help-per2",per],["help-total",per*2]].forEach(([id,v])=>{ const e=document.getElementById(id); if(e) e.textContent=v; }); }
+  { const per = ArrecifeDeck.total(); [["help-per",per],["help-per2",per],["help-total",per*2]].forEach(([id,v])=>{ const e=document.getElementById(id); if(e) e.textContent=v; }); }
   { const h = document.getElementById("help-anguila"); if(h && !window.ARRECIFE_ANGUILA) h.remove(); const h2 = document.getElementById("help-linterna"); if(h2 && !window.ARRECIFE_LINTERNA) h2.remove(); const h3 = document.getElementById("help-almeja"); if(h3 && !window.ARRECIFE_ALMEJA) h3.remove(); const h4 = document.getElementById("help-koi"); if(h4 && !window.ARRECIFE_KOI) h4.remove(); const h5 = document.getElementById("help-anemona"); if(h5 && !window.ARRECIFE_ANEMONA) h5.remove(); }
 
   const SPRITES = {
@@ -1603,11 +1724,14 @@ html.gfx-nowater .bg-water::before{ }
   let onl = null; const bridge = { onTurn:null, afterRender:null, onNewLocal:null };
   let state = null; let aiCfg = null, aiBusy = false; let lastActor = null, victoryActor = null, lastMoveInfo = null; let pearlFx = null;
 
-  function freshState(){
-    const inv = {};
+  // decks: { white:{especie:copias}, black:{...} }. Sin argumento conserva los mazos de la partida actual (reinicio) o sortea unos válidos.
+  function freshState(decks){
+    const given = decks || (state && state.deck) || {};
+    const inv = {}, deck = {};
     for(const p of ["white","black"]){
-      inv[p]={};
-      for(const s of SPECIES_ORDER) inv[p][s]=SPECIES[s].base;
+      const d = given[p] || ArrecifeDeck.random();
+      inv[p]={}; deck[p]={};
+      for(const s of SPECIES_ORDER){ const n = Number.isInteger(d[s]) ? d[s] : 0; inv[p][s]=n; deck[p][s]=n; }
     }
     return {
       stacks:{},
@@ -1615,6 +1739,7 @@ html.gfx-nowater .bg-water::before{ }
       placements:{white:0, black:0},
       queenPlaced:{white:false, black:false},
       inventory:inv,
+      deck,                 // mazo de cada jugador (copias por especie); el inventario baja al colocar, el mazo no
       turnNumber:1,
       selected:null,       // species chosen from tray -> placement mode
       selectedCell:null,   // board key of piece chosen -> movement mode
@@ -1650,6 +1775,10 @@ html.gfx-nowater .bg-water::before{ }
     for(const pl of ["white","black"]){
       if(!Number.isInteger(st.eelLast[pl])) st.eelLast[pl] = -10;
       if(st.inventory && st.inventory[pl]) for(const sp of SPECIES_ORDER){ if(!Number.isInteger(st.inventory[pl][sp])) st.inventory[pl][sp] = SPECIES[sp].base; }
+      // partidas guardadas antes del Deck Builder: su mazo es el juego completo de entonces
+      if(!st.deck || typeof st.deck!=="object") st.deck = {};
+      if(!st.deck[pl] || typeof st.deck[pl]!=="object") st.deck[pl] = {};
+      for(const sp of SPECIES_ORDER){ if(!Number.isInteger(st.deck[pl][sp])) st.deck[pl][sp] = SPECIES[sp].base; }
     }
     if(st.stunned && !Array.isArray(st.stunned)) st.stunned = [st.stunned];
     if(typeof st.bonus!=="string") st.bonus = false;
@@ -3646,6 +3775,8 @@ html.gfx-nowater .bg-water::before{ }
   }
 
   function updateTrays(){
+    const nIn = p => SPECIES_ORDER.filter(s => !(state.deck && state.deck[p]) || state.deck[p][s] > 0).length;
+    document.documentElement.style.setProperty("--nsp", Math.max(1, nIn("white"), nIn("black")));
     buildTray(trayWhite, "white");
     buildTray(trayBlack, "black");
   }
@@ -3655,6 +3786,7 @@ html.gfx-nowater .bg-water::before{ }
     const forced = mustPlaceQueenNow(player);
     const trayInteractive = player===state.currentPlayer;
     SPECIES_ORDER.forEach(spKey=>{
+      if(state.deck && state.deck[player] && !(state.deck[player][spKey] > 0)) return;   // no está en el mazo de este jugador
       const sp = SPECIES[spKey];
       const remaining = state.inventory[player][spKey];
       const btn = document.createElement("button");
@@ -4976,7 +5108,7 @@ html.gfx-nowater .bg-water::before{ }
     return {
       stacks: JSON.parse(JSON.stringify(s.stacks)), currentPlayer: s.currentPlayer,
       placements: { white:s.placements.white, black:s.placements.black }, queenPlaced: { white:!!s.queenPlaced.white, black:!!s.queenPlaced.black },
-      inventory: JSON.parse(JSON.stringify(s.inventory)), turnNumber: s.turnNumber,
+      inventory: JSON.parse(JSON.stringify(s.inventory)), deck: JSON.parse(JSON.stringify(s.deck)), turnNumber: s.turnNumber,
       gameOver: go ? (go.type==="draw" ? { type:"draw" } : (go.resigned ? { type:"win", winner:go.winner, resigned:true } : { type:"win", winner:go.winner })) : null,
       stunned: (()=>{ const l = (s.stunned ? (Array.isArray(s.stunned) ? s.stunned : [s.stunned]) : []).filter(e=>e && e.turn>=s.turnNumber).map(e=>({ key:e.key, turn:e.turn })).sort((x,y)=>x.key<y.key?-1:x.key>y.key?1:0); return l.length ? l : null; })(),
       eelLast: { white:(s.eelLast||{}).white, black:(s.eelLast||{}).black },
@@ -5004,9 +5136,9 @@ html.gfx-nowater .bg-water::before{ }
       if(v) netClear();
       if(!isAnimating) render();
     },
-    newGame(){                                                      // partida limpia (inicio, reinicio o revancha)
+    newGame(decks){                                                      // partida limpia (inicio, reinicio o revancha)
       aiCfg = null; aiBusy = false; isAnimating = false; animatingFromKey = null; statsDone = false;
-      state = freshState(); turnStartSnap = snapshot(); lastMoveInfo = null; lastActor = null; victoryActor = null;
+      state = freshState(decks); turnStartSnap = snapshot(); lastMoveInfo = null; lastActor = null; victoryActor = null;
       vHideSummary(); save(); render(); introTrays(450);
     },
     game: netGame,
@@ -5057,10 +5189,12 @@ html.gfx-nowater .bg-water::before{ }
     render(){ render(); },
     kick(){ aiKick(); },
     bridge,
-    newGame(cfg){
+    newGame(cfg, decks){
       if(bridge.onNewLocal) bridge.onNewLocal(); onl = null; document.body.classList.remove("online");
       aiCfg = cfg || null; aiBusy = false; isAnimating = false; animatingFromKey = null;
-      state = freshState(); turnStartSnap = snapshot(); save(); render(); introTrays(450);
+      decks = Object.assign({}, decks || {});
+      if(aiCfg){ const aiSide = aiCfg.human==="white" ? "black" : "white"; if(!decks[aiSide]) decks[aiSide] = ArrecifeDeck.random(); }
+      state = freshState(decks); turnStartSnap = snapshot(); save(); render(); introTrays(450);
       if(aiCfg) toast("Juegas con las "+(aiCfg.human==="white"?"Blancas":"Negras")+" contra la IA ("+LEVELS[aiCfg.level]+")");
       setTimeout(aiKick, 700);
     }
@@ -5076,7 +5210,8 @@ html.gfx-nowater .bg-water::before{ }
   "use strict";
 
   // ------------------------------------------------------------------ constantes
-  const PROTO_V = 5;   // v5: Pez Koi (intercambio), Anémona (pasiva) y Almeja (perla, movimiento adicional)
+  const PROTO_V = 6;   // v6: mazos (Deck Builder): el estado lleva `deck` y hay mensaje "deck".
+  //   // v5: Pez Koi (intercambio), Anémona (pasiva) y Almeja (perla, movimiento adicional)
   //   // v2: Anguila (especie nueva, habilidad de aturdir y estado con lista de aturdidas)
   const PEERJS_VERSION = "1.5.5"; // versión fija (verificada en el registro de npm)
   const PEERJS_URL = "https://cdn.jsdelivr.net/npm/peerjs@" + PEERJS_VERSION + "/dist/peerjs.min.js";
@@ -5508,14 +5643,15 @@ html.gfx-nowater .bg-water::before{ }
         onBoard[p.owner][p.species] = (onBoard[p.owner][p.species] || 0) + 1;
       }
     }
-    const inventory = { white: {}, black: {} };
+    const inventory = { white: {}, black: {} }, deck = { white: {}, black: {} }, DK = root.ArrecifeDeck;
     for (const o of ["white", "black"]) {
       if (!s.inventory || typeof s.inventory[o] !== "object" || !s.inventory[o]) return null;
+      if (!DK || !s.deck || !DK.validateDeck(s.deck[o])) return null;                  // el mazo debe cumplir las reglas
       for (const sp of SPECIES) {
-        const n = s.inventory[o][sp];
-        if (!isInt(n, 0, BASE[sp])) return null;
-        if (n + (onBoard[o][sp] || 0) !== BASE[sp]) return null; // coherencia: nunca sobran ni faltan piezas
-        inventory[o][sp] = n;
+        const cap = s.deck[o][sp] > 0 ? s.deck[o][sp] : 0, n = s.inventory[o][sp];
+        if (!isInt(n, 0, cap)) return null;
+        if (n + (onBoard[o][sp] || 0) !== cap) return null; // coherencia: nunca sobran ni faltan piezas del mazo
+        inventory[o][sp] = n; deck[o][sp] = cap;
       }
     }
     const placements = {}, queenPlaced = {};
@@ -5536,7 +5672,7 @@ html.gfx-nowater .bg-water::before{ }
     }
     const eelLast = {};
     for (const o of ["white", "black"]) { const v = s.eelLast && s.eelLast[o] != null ? s.eelLast[o] : -10; if (!isInt(v, -10, 5001)) return null; eelLast[o] = v; }
-    return { stacks, inventory, currentPlayer: s.currentPlayer, placements, queenPlaced, turnNumber: s.turnNumber, gameOver, stunned, eelLast, bonus: (typeof s.bonus === "string" && isKey(s.bonus)) ? s.bonus : false };
+    return { stacks, inventory, deck, currentPlayer: s.currentPlayer, placements, queenPlaced, turnNumber: s.turnNumber, gameOver, stunned, eelLast, bonus: (typeof s.bonus === "string" && isKey(s.bonus)) ? s.bonus : false };
   }
   /** Devuelve el mensaje normalizado, {t:"badversion"} si es un hello de otra versión, o null si hay que ignorarlo. */
   function validate(m) {
@@ -5563,6 +5699,11 @@ html.gfx-nowater .bg-water::before{ }
           o.la = { n: m.la.n, a, h: m.la.h };
         }
         return o;
+      }
+      case "deck": {
+        const DK = root.ArrecifeDeck;
+        if (!DK || !m.d || !DK.validateDeck(m.d)) return null;
+        return { v: PROTO_V, t: "deck", d: DK.normalizeDeck(m.d) };
       }
       case "chat": {
         if (typeof m.x !== "string") return null;
@@ -5598,7 +5739,7 @@ html.gfx-nowater .bg-water::before{ }
   }
   function hashGame(g) {
     const s = canon({
-      stacks: g.stacks, inventory: g.inventory, currentPlayer: g.currentPlayer, turnNumber: g.turnNumber,
+      stacks: g.stacks, inventory: g.inventory, deck: g.deck, currentPlayer: g.currentPlayer, turnNumber: g.turnNumber,
       placements: g.placements, queenPlaced: g.queenPlaced, stunned: g.stunned || null, eelLast: g.eelLast || null, gameOver: g.gameOver || null, bonus: typeof g.bonus === "string" ? g.bonus : false
     });
     let h = 0x811c9dc5;
@@ -5795,7 +5936,7 @@ html.gfx-nowater .bg-water::before{ }
     const L = me.link;
     L.onOpen = () => { if (S !== me) return; me.lastRx = now(); sendHello(); };
     L.onMessage = (raw, meta) => { if (S === me) onRaw(raw, meta); };
-    L.onClose = () => { if (S === me && me.started && me.phase === "playing") lost("closed"); };
+    L.onClose = () => { if (S !== me) return; if (me.started && me.phase === "playing") lost("closed"); else if (!me.started && me.deckOpen) abortDeck("Se perdió la conexión con tu rival antes de empezar."); };
     L.onError = e => { if (S === me && !me.started) lobbyError(e.message); };
     L.onSignal = () => { if (S === me) setIndicator(me.phase === "playing" ? "ok" : "wait"); };
   }
@@ -5833,6 +5974,7 @@ html.gfx-nowater .bg-water::before{ }
       case "pong": break;
       case "act": onAct(m); break;
       case "chat": onChat(m); break;
+      case "deck": onDeck(m); break;
       case "sync": onSync(m); break;
       case "resign": onResign(); break;
       case "rematch": onRematch(m); break;
@@ -5865,21 +6007,44 @@ html.gfx-nowater .bg-water::before{ }
       if (!meta.primary) S.link.adopt(meta.conn);
       S.lastRx = now();
       if (!S.guestSid) S.guestSid = m.sid;
-      if (!S.started) hostBegin(); else hostReconcile(m);
+      if (!S.started) { openDeckPhase(); hostMaybeBegin(); } else hostReconcile(m);
     } else {
       if (m.role !== "host" || !m.color || !meta.primary) return;
       S.lastRx = now(); S.color = other(m.color);
       if (S.started) { S.locks.add("sync"); applyLock(); }          // reconexión: esperar el sync del anfitrión
+      else openDeckPhase();
     }
   }
   function enterGameUI() {
     clearTimeout(S && S.joinT);
+    try { window.ArrecifeDeckUI && window.ArrecifeDeckUI.close(); } catch (e) {}
     $("setup-modal").classList.remove("show"); resetLobby();
     if (window.ArrecifeMenu) window.ArrecifeMenu.hide();
   }
+  // ---- mazos: ambos arman el suyo antes de empezar; el anfitrión inicia cuando tiene los dos
+  function abortDeck(msg) {
+    try { window.ArrecifeDeckUI && window.ArrecifeDeckUI.close(); } catch (e) {}
+    closeSession(null); lobby("choose"); lobbyError(msg);
+  }
+  function openDeckPhase() {
+    const me = S, DUI = window.ArrecifeDeckUI;
+    if (!me || me.started || me.deckOpen || !DUI) return;
+    me.deckOpen = true; clearTimeout(me.joinT);
+    if (me.role === "host") lobby("wait", { code: me.code, title: "Rival conectado", status: "Armando los mazos…", color: me.color });
+    else lobby("wait", { code: me.code, join: true, title: "Conectado", status: "Armando los mazos…" });
+    DUI.open({
+      title: "Arma tu mazo", sub: "Juegas con las " + COLOR_ES(me.color) + ". Tu rival arma el suyo a la vez.", color: me.color, stay: true,
+      waitText: me.role === "host" ? "Esperando el mazo de tu rival…" : "Esperando a que el anfitrión inicie…",
+      onConfirm(deck) { if (S !== me || me.started) return; me.myDeck = deck; if (me.role === "guest") send({ t: "deck", d: deck }); else hostMaybeBegin(); },
+      onCancel() { if (S !== me) return; closeSession("quit"); lobby("choose"); }
+    });
+  }
+  function hostMaybeBegin() { if (S && S.role === "host" && !S.started && S.myDeck && S.guestDeck && S.guestSid) hostBegin(); }
+  function onDeck(m) { if (!S || S.role !== "host" || S.started) return; S.guestDeck = m.d; hostMaybeBegin(); }
   function hostBegin() {
     S.started = true; S.phase = "playing"; S.attempts = 0;
-    B.enter(S.color); B.newGame();
+    const decks = {}; decks[S.color] = S.myDeck; decks[other(S.color)] = S.guestDeck;
+    B.enter(S.color); B.newGame(decks);
     S.locks.clear(); applyLock();
     sendSync(); startTimers(); persist(); enterGameUI(); setIndicator("ok"); SFX("net_connected");
     toast("¡Rival conectado! Juegas con las " + COLOR_ES(S.color));
@@ -5992,6 +6157,7 @@ html.gfx-nowater .bg-water::before{ }
       if (!S.started) { closeSession(null); lobby("choose"); lobbyError("Esa partida ya tiene dos jugadores."); }
       return;
     }
+    if (!S.started) { abortDeck("Tu rival salió antes de empezar la partida."); return; }
     if (m.reason === "unload") { if (S.phase === "playing") { S.lostReason = "bye"; lost("bye"); } return; }
     // quit: salida definitiva
     const st = B.peek();
@@ -6007,9 +6173,12 @@ html.gfx-nowater .bg-water::before{ }
     S.rematch = { mine: true, swap }; send({ t: "rematch", m: "req", swap }); toast("Solicitud enviada. Esperando respuesta…"); B.afterRender();
   }
   function applyNewGame(swap) {
-    S.rematch = null; if (swap) { S.color = other(S.color); B.setColor(S.color); }
+    S.rematch = null;
+    const cur = B.peek().deck, mine = cur[S.color], riv = cur[other(S.color)];       // cada uno conserva su mazo en la revancha
+    if (swap) { S.color = other(S.color); B.setColor(S.color); }
+    const decks = {}; decks[S.color] = mine; decks[other(S.color)] = riv;
     S.lastAct = null; S.expectHash = null; S.passStreak = 0; S.locks.delete("sync");
-    closeModal(); B.newGame(); persist(); applyLock();
+    closeModal(); B.newGame(decks); persist(); applyLock();
     toast(swap ? "¡Revancha! Ahora juegas con las " + COLOR_ES(S.color) : "Partida reiniciada");
   }
   function onRematch(m) {
@@ -6391,6 +6560,87 @@ html.gfx-nowater .bg-water::before{ }
     setTimeout(() => { clearPieces(); scr.classList.remove("show","leaving"); wrap.classList.remove("entering"); }, 600);
   }
 
+  /* ====================== Deck Builder (constructor de mazos) ====================== */
+  (function(){
+    const D = window.ArrecifeDeck, dm = $("deck-modal"), body = $("dk-body"), LS = "arrecife_deck_last";
+    let cur = null;
+    const loadLast = () => { try{ return JSON.parse(localStorage.getItem(LS) || "null"); }catch(e){ return null; } };
+    const saveLast = ch => { try{ localStorage.setItem(LS, JSON.stringify(ch)); }catch(e){} };
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+    function paint(){
+      const st = D.status(cur.choice), color = cur.o.color === "black" ? "black" : "white", miss = [];
+      let html = "";
+      D.categories().forEach(c => {
+        const ps = st.per[c.id], chosen = st.choice[c.id];
+        if(!ps.ok && c.pool.length) miss.push(c.label + " " + (ps.need - ps.have));
+        html += '<section class="dk-cat' + (ps.ok ? " ok" : "") + '"><header><b>' + c.label + '</b><span>' +
+          (c.auto ? "Automática" : (c.pool.length ? ps.have + "/" + c.need + " especies" : "Próximamente")) +
+          " · ×" + c.copies + (c.copies === 1 ? " copia" : " copias") + "</span></header>";
+        if(!c.pool.length){
+          html += '<p class="dk-soon">Aún no hay especies legendarias. Cuando existan, podrás elegir ' + c.picks + " para tu mazo.</p>";
+        } else {
+          html += '<div class="dk-grid">';
+          c.pool.forEach(sp => {
+            const on = chosen.indexOf(sp) >= 0, full = !on && ps.have >= c.need;
+            html += '<button type="button" class="dk-sp' + (on ? " on" : "") + '" data-c="' + c.id + '" data-sp="' + sp + '"' +
+              ((c.auto || full || cur.locked) ? " disabled" : "") + ' aria-pressed="' + on + '"><img src="' + (S[sp + "_" + color] || "") +
+              '" alt=""><span>' + esc(D.name(sp)) + "</span><i>×" + c.copies + "</i></button>";
+          });
+          html += "</div>";
+        }
+        html += "</section>";
+      });
+      body.innerHTML = html;
+      $("dk-count").textContent = st.pieces + " / " + D.total() + " piezas";
+      $("dk-hint").textContent = cur.locked ? (cur.o.waitText || "Esperando…") : (st.ok ? "¡Mazo completo!" : "Falta: " + miss.join(", "));
+      $("dk-go").disabled = !st.ok || cur.locked;
+      $("dk-random").disabled = cur.locked;
+    }
+    function open(o){
+      o = o || {};
+      const start = o.initial ? D.choiceFromDeck(o.initial) : (o.prefill === false ? null : loadLast());
+      cur = { o, choice:D.sanitize(start), locked:false };
+      $("dk-title").textContent = o.title || "Arma tu mazo";
+      $("dk-sub").textContent = o.sub || "";
+      $("dk-badge").src = S["tortuga_" + (o.color === "black" ? "black" : "white")] || "";
+      $("dk-cancel").textContent = o.cancelLabel || "Cancelar";
+      dm.classList.add("show"); paint();
+    }
+    function close(){ dm.classList.remove("show"); cur = null; }
+    function wait(text){ if(!cur) return; cur.locked = true; if(text) cur.o.waitText = text; paint(); }
+    body.addEventListener("click", e => {
+      const b = e.target.closest(".dk-sp"); if(!b || b.disabled || !cur || cur.locked) return;
+      const arr = cur.choice[b.dataset.c] || (cur.choice[b.dataset.c] = []), i = arr.indexOf(b.dataset.sp);
+      if(i >= 0) arr.splice(i, 1); else arr.push(b.dataset.sp);
+      cur.choice = D.sanitize(cur.choice); paint();
+    });
+    $("dk-random").addEventListener("click", () => { if(!cur || cur.locked) return; cur.choice = D.choiceFromDeck(D.random()); paint(); });
+    $("dk-go").addEventListener("click", () => {
+      if(!cur || cur.locked) return;
+      const deck = D.build(cur.choice); if(!deck) return;
+      saveLast(D.sanitize(cur.choice));
+      const o = cur.o;
+      if(o.stay){ wait(o.waitText || "Esperando…"); } else { close(); }
+      if(o.onConfirm) o.onConfirm(deck);
+    });
+    $("dk-cancel").addEventListener("click", () => { const o = cur && cur.o; close(); if(o && o.onCancel) o.onCancel(); });
+    window.ArrecifeDeckUI = { open, close, wait, isOpen: () => !!cur };
+  })();
+
+  /* Inicio de partida local: el constructor aparece antes de empezar (IA: el tuyo; 2 jugadores: uno tras otro) */
+  function startLocal(){
+    const DUI = window.ArrecifeDeckUI, back = () => $("setup-modal").classList.add("show");
+    const begin = decks => { G.newGame(cfg.mode === "ai" ? { human:cfg.human, level:cfg.level } : null, decks); hide(); };
+    if(cfg.mode === "ai"){
+      DUI.open({ title:"Arma tu mazo", color:cfg.human, sub:"Juegas con las " + (cfg.human === "white" ? "Blancas" : "Negras") + ". La IA arma el suyo al azar.",
+        onConfirm: d => begin({ [cfg.human]: d }), onCancel: back });
+    } else {
+      DUI.open({ title:"Mazo de las Blancas", color:"white", sub:"Jugador 1 de 2", onCancel: back,
+        onConfirm: d1 => DUI.open({ title:"Mazo de las Negras", color:"black", sub:"Jugador 2 de 2 · pasa el dispositivo", prefill:false, onCancel: back,
+          onConfirm: d2 => begin({ white:d1, black:d2 }) }) });
+    }
+  }
+
   const LV = { easy:"Fácil", medium:"Media", hard:"Difícil" };
   const cfg = { mode:"ai", human:"white", level:"medium" };
   try{ Object.assign(cfg, JSON.parse(localStorage.getItem("arrecife_setup") || "{}")); }catch(e){}
@@ -6406,7 +6656,7 @@ html.gfx-nowater .bg-water::before{ }
   $("setup-go").addEventListener("click", () => {
     try{ localStorage.setItem("arrecife_setup", JSON.stringify(cfg)); }catch(e){}
     setup.classList.remove("show");
-    G.newGame(cfg.mode==="ai" ? { human:cfg.human, level:cfg.level } : null); hide();
+    startLocal();
   });
   const ACT = {
     continue: hide,
