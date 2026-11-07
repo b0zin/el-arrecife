@@ -217,8 +217,7 @@
     min-height:120px;
     touch-action:none;
   }
-  .board-area{ --tb:62px; }   /* franja inferior reservada (sliders + botones de modo): nada de eso tapa ya las piezas */
-  #board-svg{ position:absolute; left:0; top:0; width:100%; height:calc(100% - var(--tb)); display:block; cursor:grab; }
+  #board-svg{ width:100%; height:100%; display:block; cursor:grab; }
   .pixel-sprite{
     image-rendering:pixelated;
     image-rendering:crisp-edges;
@@ -288,15 +287,15 @@
     position:absolute;
     left:10px;
     right:58px;
-    bottom:24px;
+    bottom:10px;
     display:flex;
     gap:6px;
     flex-wrap:wrap;
     align-content:flex-end;
-    max-height:calc(var(--tb) - 26px);
-    overflow:hidden;
     z-index:2;
+    pointer-events:none;      /* el contenedor no intercepta toques: solo los botones */
   }
+  .move-toolbar > *{ pointer-events:auto; }
 
   .board-controls{
     position:absolute;
@@ -318,28 +317,6 @@
     line-height:1;
   }
   .zoom-btn:hover{ border-color:var(--teal); }
-
-  .pan-slider{
-    position:absolute;
-    accent-color:var(--teal);
-    background:transparent;
-  }
-  .pan-x{
-    left:12px;
-    right:52px;
-    bottom:4px;
-    height:16px;
-    width:auto;
-  }
-  .pan-y{
-    top:60px;
-    bottom:88px;
-    right:4px;
-    width:16px;
-    height:auto;
-    -webkit-appearance:slider-vertical;
-    appearance:slider-vertical;
-  }
 
   .chip{
     background:var(--hint-bg);
@@ -1337,9 +1314,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
           <div class="sum-actions"><button class="btn-primary" id="sum-new">Nueva partida</button><button class="icon-btn" id="sum-newdeck" type="button">Cambiar mazo</button><button class="icon-btn" id="sum-view">Ver tablero</button><button class="icon-btn" id="sum-menu">☰ Menú</button></div>
         </div>
         <div class="move-toolbar" id="move-toolbar"></div>
-        <input type="range" class="pan-slider pan-x" id="pan-x" min="-900" max="900" step="1" value="0" aria-label="Mover el tablero horizontalmente">
-        <input type="range" class="pan-slider pan-y" id="pan-y" min="-900" max="900" step="1" value="0" orient="vertical" aria-label="Mover el tablero verticalmente">
-        <div class="board-controls">
+                <div class="board-controls">
           <button class="zoom-btn" id="zoom-in" title="Acercar">+</button>
           <button class="zoom-btn" id="zoom-out" title="Alejar">−</button>
           <button class="zoom-btn" id="zoom-reset" title="Centrar">⌂</button>
@@ -1534,7 +1509,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     <p id="help-pirana"><strong>Piraña:</strong> En su turno puede moverse un espacio alrededor del arrecife. Si al terminar ese movimiento queda junto a otra Piraña aliada, esa aliada obtiene de inmediato un movimiento adicional (y si al moverse queda junto a otra Piraña aliada que todavía no se movió, le pasa el movimiento a ella, y así en cadena). Una misma Piraña no puede moverse más de una vez en el mismo turno, a no ser que consuma una perla.</p>
     <p id="help-ballena"><strong>Ballena (legendaria):</strong> En su turno puede o moverse o usar su habilidad. Si decide moverse, avanza 1 espacio alrededor del arrecife. Si decide usar su habilidad, «Tragar», se «traga» a cualquier pieza adyacente, aliada o rival (excepto las Tortugas Reina), retirándola temporalmente del juego y guardándola en su interior. Solo puede tener una pieza tragada a la vez. En un turno posterior, en lugar de moverse, puede usar «Escupir» para colocar la pieza retenida en cualquier hexágono vacío adyacente a ella. Si la Ballena está aturdida, no puede escupir. Tras escupir, debe esperar 2 turnos propios antes de volver a tragar. Si la Ballena se mueve, la pieza tragada viaja con ella. Si no la escupe antes, tras 3 turnos propios la escupe a la fuerza (al hexágono vacío adyacente o, si no hay ninguno, al vacío más cercano). El Pulpo no la copia.</p>
     <p id="help-estrella"><strong>Estrella de Mar (Legendaria):</strong> En su turno puede o moverse o usar su habilidad. Si decide moverse, avanza 1 espacio alrededor del arrecife. Si decide usar su habilidad, «Remolino», usa todos sus brazos para tomar a todas las piezas adyacentes, aliadas y rivales (excepto las Tortugas Reina y las piezas protegidas por el Nautilo), y las reordena de forma aleatoria entre sus casillas. Tiene un tiempo de recarga de 3 turnos propios.</p>
-    <p id="help-nautilo"><strong>Nautilo (Legendaria):</strong> En su turno puede o moverse o usar su habilidad. Si decide moverse, avanza un espacio deslizándose alrededor del arrecife. Si decide usar su habilidad, «Caparazón ancestral», se queda en su lugar y protege a una pieza aliada adyacente (incluida la Tortuga Reina). Durante los 2 turnos siguientes esa pieza es intocable: inmune a las habilidades rivales, ninguna habilidad puede reubicarla de su hexágono (tampoco puede moverse por sí sola), y ninguna pieza enemiga puede terminar su movimiento en una casilla adyacente ni subirse a ella. Tiene 3 turnos de recarga, que empiezan a contar cuando termina la protección. El Pulpo no lo copia.</p>
+    <p id="help-nautilo"><strong>Nautilo (Legendaria):</strong> En su turno puede o moverse o usar su habilidad. Si decide moverse, avanza un espacio deslizándose alrededor del arrecife. Si decide usar su habilidad, «Caparazón ancestral», se queda en su lugar y protege a una pieza aliada adyacente (incluida la Tortuga Reina). Durante sus 3 turnos propios siguientes esa pieza es intocable: inmune a las habilidades rivales, ninguna habilidad puede reubicarla de su hexágono (tampoco puede moverse por sí sola), y ninguna pieza enemiga puede terminar su movimiento en una casilla adyacente ni subirse a ella. Tiene 3 turnos de recarga, que empiezan a contar cuando termina la protección. El Pulpo no lo copia.</p>
     <p id="help-almeja"><strong>Almeja:</strong> Es inmóvil: no puede moverse por sí sola y solo puede ser trasladada por los efectos de otras piezas (por ejemplo la «Tenaza» de la Langosta o el «Señuelo» del Pez Linterna). En su turno puede usar su habilidad, «Abrir almeja», que tiene 1 de 2 probabilidades de revelar una perla en su interior. Mientras la perla esté expuesta, cualquier pieza, aliada o rival, que termine su movimiento en un espacio adyacente a la Almeja consume la perla automáticamente y su jugador obtiene un movimiento adicional inmediato, solo con esa misma pieza (no se puede colocar ni mover otra). Cada mazo que la incluye lleva dos Almejas.</p>
 
     <div class="modal-actions">
@@ -1798,7 +1773,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     const c=e.target.closest&&e.target.closest(".mbtn,.opt,.icon-btn,.piece-btn,.m-sound"); if(!c||c.disabled||c.contains(e.relatedTarget)) return;
     play(c.classList.contains("piece-btn")?"tray_hover":"ui_hover");
   });
-  document.addEventListener("input",e=>{ if(e.target.matches&&e.target.matches("#pan-x,#pan-y")) play("slider_tick"); });
+  
   document.addEventListener("DOMContentLoaded",()=>{
     new MutationObserver(ms=>ms.forEach(m=>{ const t=m.target; if(!t.classList||!t.classList.contains("modal-backdrop")) return;
       const was=(m.oldValue||"").split(" ").includes("show"), is=t.classList.contains("show"); if(is&&!was) play("ui_open"); else if(was&&!is) play("ui_close"); }))
@@ -1954,6 +1929,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       inventory:inv,
       deck,                 // mazo de cada jugador (copias por especie); el inventario baja al colocar, el mazo no
       turnNumber:1,
+      pv:2,                    // 2 = duraciones y recargas en TURNOS PERSONALES (state.ot), no en turnos globales
       ot:{white:0, black:0},  // turnos propios ya terminados por cada jugador (el contador de pantalla cuenta por jugador, no globales)
       selected:null,       // species chosen from tray -> placement mode
       selectedCell:null,   // board key of piece chosen -> movement mode
@@ -2015,6 +1991,19 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     if(typeof st.bonus!=="string") st.bonus = false;
     st.bonusQ = (st.bonus && Array.isArray(st.bonusQ)) ? st.bonusQ.filter(k=>typeof k==="string") : [];
     st.pirMoved = (st.bonus && Array.isArray(st.pirMoved)) ? st.pirMoved.filter(k=>typeof k==="string") : [];
+    if(st.pv!==2){            // partida guardada con duraciones en turnos globales → se traducen a turnos personales (aproximado)
+      const tn = Number.isInteger(st.turnNumber)?st.turnNumber:1, cur = st.currentPlayer==="black"?"black":"white", oth = cur==="white"?"black":"white", od = p=>st.ot[p]||0;
+      const sl = !st.stunned ? [] : (Array.isArray(st.stunned)?st.stunned:[st.stunned]);
+      const nl = sl.filter(e=>e && !e.p && Number.isInteger(e.turn) && e.turn>=tn).map(e=>{ const p = ((e.turn-tn)%2===0) ? cur : oth; return { key:e.key, turn:od(p), p }; });
+      st.stunned = nl.length ? nl : null;
+      for(const pl of ["white","black"]){
+        st.eelLast[pl] = (st.eelLast[pl]===(pl===cur ? tn-2 : tn-1)) ? od(pl)-1 : -10;
+        st.whaleLast[pl] = (st.whaleLast[pl]>-10 && tn-st.whaleLast[pl]<6) ? od(pl)-1 : -10;
+        st.nautilus.last[pl] = (st.nautilus.last[pl]>-100 && tn-st.nautilus.last[pl]<6) ? od(pl)-1 : -100;
+      }
+      st.nautilus.shields = st.nautilus.shields.filter(e=>e.t<tn && tn<=e.t+2).map(e=>({ key:e.key, owner:e.owner, t:od(e.owner)-1 }));
+      st.pv = 2;
+    }
     return st;
   }
   state = normalizeState(load() || freshState());
@@ -2044,8 +2033,6 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   const toastEl = document.getElementById("toast");
   const hintBanner = document.getElementById("hint-banner");
   const moveToolbar = document.getElementById("move-toolbar");
-  const panXSlider = document.getElementById("pan-x");
-  const panYSlider = document.getElementById("pan-y");
   const statusRowEl = document.getElementById("status-row");
   const gameoverBanner = document.getElementById("gameover-banner");
   const gameoverText = document.getElementById("gameover-text");
@@ -2081,17 +2068,25 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   function stunList(){ const sl = state.stunned; return !sl ? [] : (Array.isArray(sl) ? sl : [sl]); }
   // Movimiento adicional: piezas habilitadas ahora mismo (la principal `bonus` + las pendientes `bonusQ`).
   function bonusKeys(){ return state.bonus ? [state.bonus].concat(Array.isArray(state.bonusQ) ? state.bonusQ : []) : []; }
-  function isStunned(k){ return stunList().some(e=>e && e.key===k && e.turn===state.turnNumber); }
+  // Turnos PERSONALES: state.ot[p] = turnos propios que p ya terminó (el movimiento adicional no cuenta como turno nuevo).
+  function ownDone(p){ return (state.ot && Number.isInteger(state.ot[p])) ? state.ot[p] : 0; }
+  // Aturdimiento: {key, p, turn}: la pieza de `key` no actúa durante el próximo turno propio de `p` (cuando p lleva `turn` turnos terminados).
+  function isStunned(k){ return stunList().some(e=>e && e.key===k && e.p===state.currentPlayer && e.turn===ownDone(e.p)); }
+  function stunFor(p, keys){ return keys.map(k=>({ key:k, p, turn:ownDone(p) })); }
   // Nautilo — Caparazón ancestral. Ajusta aquí la duración y la recarga (en turnos de juego: cada turno es la jugada de un solo jugador).
-  const NAUTILUS_SHIELD_TURNS = 2, NAUTILUS_COOLDOWN = 3;
+  const NAUTILUS_SHIELD_TURNS = 3, NAUTILUS_COOLDOWN = 3;   // ahora en turnos PERSONALES del jugador que lanza el escudo
   // La protección lanzada en el turno t actúa durante los turnos t+1 y t+2; la recarga cuenta t+3, t+4 y t+5, así que vuelve a estar lista en t+6.
-  function activeShields(){ const n = state.nautilus; return (n && Array.isArray(n.shields)) ? n.shields.filter(s=>s && s.t < state.turnNumber && state.turnNumber <= s.t+NAUTILUS_SHIELD_TURNS) : []; }
+  // s.t = turnos propios que el lanzador llevaba terminados al lanzar. Edad = turnos propios que ya completó desde entonces.
+  // Protege mientras la edad esté entre 1 y NAUTILUS_SHIELD_TURNS: el turno siguiente del rival y los siguientes turnos de ambos, hasta que el lanzador termina su turno nº N.
+  function shieldAge(s){ return ownDone(s.owner) - s.t; }
+  function shieldLastTurn(s){ return state.currentPlayer===s.owner && shieldAge(s)===NAUTILUS_SHIELD_TURNS; }
+  function activeShields(){ const n = state.nautilus; return (n && Array.isArray(n.shields)) ? n.shields.filter(s=>s && shieldAge(s)>=1 && shieldAge(s)<=NAUTILUS_SHIELD_TURNS) : []; }
   function shieldAt(k){ return activeShields().find(s=>s.key===k) || null; }
-  function nautilusReady(owner){ const n = state.nautilus, last = (n && n.last && Number.isInteger(n.last[owner])) ? n.last[owner] : -100; return state.turnNumber - last >= NAUTILUS_SHIELD_TURNS + NAUTILUS_COOLDOWN + 1; }
+  function nautilusReady(owner){ const n = state.nautilus, last = (n && n.last && Number.isInteger(n.last[owner])) ? n.last[owner] : -100; return ownDone(owner) - last >= NAUTILUS_SHIELD_TURNS + NAUTILUS_COOLDOWN + 1; }
   // Casillas protegidas por el bando contrario a `owner` y todas sus vecinas: un rival no puede terminar ahí su movimiento ni subirse a la pieza protegida
   function rivalShieldZone(owner){ const z = new Set(); activeShields().forEach(s=>{ if(s.owner!==owner){ z.add(s.key); neighborKeys(s.key).forEach(k=>z.add(k)); } }); return z; }
   // Un movimiento adicional (perla/Piraña) suma un número de turno sin ser un turno nuevo: se desplaza todo para que ni la protección ni la recarga se gasten.
-  function nautilusShift(d){ const n = state.nautilus; if(!n) return; (n.shields||[]).forEach(s=>{ if(s) s.t += d; }); if(n.last) for(const p of ["white","black"]) if(Number.isInteger(n.last[p]) && n.last[p] > -100) n.last[p] += d; }
+  function nautilusShift(d){ /* ya no hace falta: los turnos personales no cuentan el movimiento adicional */ }
   function nautilusAbilityTargets(stacksAll, fromKey){
     const stk = stacksAll[fromKey], me = stk && stk[stk.length-1]; if(!me || !nautilusReady(me.owner)) return [];
     return neighborKeys(fromKey).filter(nk=>{ const s = stacksAll[nk]; return s && s.length && s[s.length-1].owner===me.owner && !shieldAt(nk); });
@@ -2206,18 +2201,16 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     if(pendB.length && !state.gameOver){
       // Movimiento adicional: sigue siendo el mismo jugador. Lo que dependía del número de turno (aturdidos que vencían ahora,
       // «Shockwave» no dos turnos propios seguidos) se desplaza una unidad para que siga valiendo durante el turno extra.
-      const mover = state.currentPlayer, t0 = state.turnNumber, backup = JSON.stringify([state.stunned, state.eelLast, state.whaleLast]);
-      if(state.stunned) state.stunned = stunList().filter(Boolean).map(e=> e.turn===t0 ? { key:e.key, turn:t0+1 } : e);
-      if(state.eelLast && state.eelLast[mover]===t0-2) state.eelLast[mover] = t0-1;
-      if(state.whaleLast && state.whaleLast[mover]>-10) state.whaleLast[mover]++;
-      state.turnNumber = t0+1; nautilusShift(1);       // el movimiento adicional no gasta duración ni recarga del Nautilo
+      const mover = state.currentPlayer, t0 = state.turnNumber;
+      state.turnNumber = t0+1;       // solo para el orden de red: state.ot no cambia, así que el movimiento adicional no gasta duraciones ni recargas
       const okB = pendB.filter(k=>bonusCanAct(k, mover));                    // la pieza que no tenga jugadas posibles pierde su premio
       if(okB.length){ state.bonus = okB[0]; state.bonusQ = okB.slice(1); bonusGranted = true; }
-      else { state.turnNumber = t0; nautilusShift(-1); const b = JSON.parse(backup); state.stunned = b[0]; state.eelLast = b[1]; state.whaleLast = b[2]; }
+      else { state.turnNumber = t0; }
     }
     if(!bonusGranted){
       state.bonus = false; state.bonusQ = []; state.pirMoved = [];
       state.ot = state.ot || { white:0, black:0 }; state.ot[state.currentPlayer] = (state.ot[state.currentPlayer]||0) + 1;   // termina un turno propio de este jugador
+      if(state.stunned){ const cpDone = state.currentPlayer, rest = stunList().filter(e=>e && e.p!==cpDone); state.stunned = rest.length ? rest : null; }   // los aturdimientos de este jugador ya cumplieron su turno
       if(state.starCd && state.starCd[state.currentPlayer]>0) state.starCd[state.currentPlayer]--;      // recarga de la Estrella de Mar: cuenta los turnos propios (no los movimientos adicionales)
       state.currentPlayer = otherPlayer(state.currentPlayer);
       state.turnNumber++;
@@ -2502,16 +2495,16 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   function eelAbilityTargets(stacksAll, fromKey){
     const stk = stacksAll[fromKey], me = stk && stk[stk.length-1]; if(!me) return [];
     const last = state.eelLast ? state.eelLast[me.owner] : -10;
-    if(last === state.turnNumber-2) return [];
+    if(last >= 0 && last === ownDone(me.owner)-1) return [];             // no dos turnos PROPIOS seguidos
     const out = [];
     neighborKeys(fromKey).forEach(nk=>{ const st = stacksAll[nk]; if(st && st.length && st[st.length-1].owner!==me.owner && !shieldAt(nk)) out.push(nk); });
     return out;
   }
   // Ballena (legendaria) — «Tragar»: retira del juego a la pieza de arriba de cualquier pila adyacente (aliada o rival, salvo Tortugas Reina)
   // y la guarda en su interior (piece.held). Solo una a la vez; no hay recarga mientras no haya escupido. El arrecife debe seguir conectado.
-  // Tras escupir hay que esperar 2 turnos propios (whaleLast): el turno T+2 y T+4 quedan bloqueados, T+6 ya vale.
-  const WHALE_COOLDOWN = 6;
-  function whaleCoolingDown(owner){ const l = state.whaleLast ? state.whaleLast[owner] : -10; return typeof l==="number" && state.turnNumber - l < WHALE_COOLDOWN; }
+  // Tras escupir hay que esperar 2 turnos propios (whaleLast): los 2 turnos propios siguientes quedan bloqueados y el tercero ya vale.
+  const WHALE_COOLDOWN = 2;   // turnos PERSONALES de espera tras escupir
+  function whaleCoolingDown(owner){ const l = state.whaleLast ? state.whaleLast[owner] : -10; return typeof l==="number" && l>=0 && ownDone(owner) - l < WHALE_COOLDOWN + 1; }
   function whaleSwallowTargets(stacksAll, fromKey){
     const stk = stacksAll[fromKey], me = stk && stk[stk.length-1]; if(!me || me.held || whaleCoolingDown(me.owner)) return [];
     return neighborKeys(fromKey).filter(nk=>{
@@ -2555,7 +2548,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
         const to = whaleNearestEmpty(k); if(!to) return;
         state.stacks[to] = [p.held]; delete p.held; delete p.heldN;
         state.whaleLast = state.whaleLast || { white:-10, black:-10 };
-        state.whaleLast[owner] = state.turnNumber;
+        state.whaleLast[owner] = ownDone(owner);
         out.push({ from:k, to });
       });
     }
@@ -3605,7 +3598,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     if(whale && whale.held && !state.stacks[to]){
       state.stacks[to] = [whale.held]; delete whale.held; delete whale.heldN;
       state.whaleLast = state.whaleLast || { white:-10, black:-10 };
-      state.whaleLast[whale.owner] = state.turnNumber;                  // empieza la recarga de 2 turnos propios
+      state.whaleLast[whale.owner] = ownDone(whale.owner);              // empieza la recarga de 2 turnos propios
     }
     lastActor = null;
     finishTurn(to);                          // escupir consume el turno
@@ -3622,9 +3615,9 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   function executeNautilusShield(from, to){
     const me = topOf(from), owner = me ? me.owner : state.currentPlayer;
     const n = state.nautilus = state.nautilus || { shields:[], last:{ white:-100, black:-100 } };
-    n.shields = (n.shields||[]).filter(s=>s && s.t+NAUTILUS_SHIELD_TURNS >= state.turnNumber);
-    n.shields.push({ key:to, owner, t:state.turnNumber });
-    n.last = n.last || {}; n.last[owner] = state.turnNumber;
+    n.shields = (n.shields||[]).filter(s=>s && shieldAge(s) <= NAUTILUS_SHIELD_TURNS);
+    n.shields.push({ key:to, owner, t:ownDone(owner) });
+    n.last = n.last || {}; n.last[owner] = ownDone(owner);
     lastActor = null;
     finishTurn();
   }
@@ -3708,7 +3701,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     state.stacks[to] = [piece];
     // Mark it stunned for exactly the turn right after this one (the opponent's very next
     // turn), so it can't just be shoved straight back — prevents an infinite back-and-forth loop.
-    state.stunned = [{ key: to, turn: state.turnNumber+1 }];
+    state.stunned = stunFor(otherPlayer(state.currentPlayer), [to]);
     lastActor = lobsterActorOf(from, to);
     finishTurn(to); // the lobster/pulpo itself stays put; using the ability still consumes the turn
   }
@@ -3716,8 +3709,8 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   // Anguila: aturde a las piezas rivales vecinas durante el turno siguiente y registra el uso (anti-repetición).
   function executeEelStun(at){
     const me = topOf(at), targets = eelAbilityTargets(state.stacks, at);
-    state.stunned = targets.map(k=>({ key:k, turn:state.turnNumber+1 }));
-    if(me){ state.eelLast = state.eelLast || { white:-10, black:-10 }; state.eelLast[me.owner] = state.turnNumber; }
+    state.stunned = stunFor(otherPlayer(me ? me.owner : state.currentPlayer), targets);
+    if(me){ state.eelLast = state.eelLast || { white:-10, black:-10 }; state.eelLast[me.owner] = ownDone(me.owner); }
     lastActor = null;
     finishTurn();                            // el tablero no cambia; usar la habilidad consume el turno
   }
@@ -4053,6 +4046,14 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     flashIllegalKey = null;
   }
 
+  // Turnos propios que le faltan al dueño para poder usar de nuevo la habilidad de su pieza legendaria (0 = lista)
+  function legendCooldown(piece){
+    if(!piece) return 0; const o = piece.owner;
+    if(piece.species==="ballena"){ if(!whaleCoolingDown(o)) return 0; return Math.max(1, WHALE_COOLDOWN + 1 - (ownDone(o) - state.whaleLast[o])); }
+    if(piece.species==="estrella"){ return Math.max(0, (state.starCd && state.starCd[o]) || 0); }
+    if(piece.species==="nautilo"){ if(nautilusReady(o)) return 0; const last = (state.nautilus && state.nautilus.last && Number.isInteger(state.nautilus.last[o])) ? state.nautilus.last[o] : -100; const age = ownDone(o) - last; if(age <= NAUTILUS_SHIELD_TURNS) return 0; return Math.max(1, NAUTILUS_SHIELD_TURNS + NAUTILUS_COOLDOWN + 1 - age); }   // solo cuenta desde que el escudo se rompe
+    return 0;
+  }
   function drawStack(g, x, y, stack, cellKey, highlightKind, isSelected, isIllegal, isStunnedPiece, isBonusPiece, isShieldedPiece){
     const classes = [];
     if(isIllegal||cellKey===flashIllegalKey) classes.push("illegal-shake");
@@ -4069,6 +4070,13 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       innerG.appendChild(el("polygon",{ points:hexCorners(x, topY, HEX_SIZE+1), fill:hcol, "fill-opacity":.1, stroke:hcol, "stroke-width":2.4, class:"whale-held-glow", "data-medal":cellKey, style:"pointer-events:none" }));   // el contorno brilla con el color de la pieza tragada
       innerG.appendChild(el("circle",{ cx:hx, cy:hy, r:9.5, fill:"#06222e", stroke:heldP.owner==="white"?"#f2f2f2":"#555", "stroke-width":2, "data-hitkey":cellKey, "data-medal":cellKey, cursor:"pointer" }));
       innerG.appendChild(el("image",{ href:skinSrc(heldP.species, heldP.owner, heldP.pearl===true), x:hx-8, y:hy-7, width:16, height:14, "data-medal":cellKey, style:"image-rendering:pixelated;pointer-events:none" }));
+    }
+    const cdN = legendCooldown(stack[stack.length-1]);
+    if(cdN>0 && !state.gameOver){        // insignia de recarga: número de turnos propios hasta poder usar la habilidad otra vez
+      const bx = x+HEX_SIZE*.56, by = topY+HEX_SIZE*.5;
+      innerG.appendChild(el("circle",{ cx:bx, cy:by, r:9.5, fill:"#06222e", stroke:"#ffd66b", "stroke-width":2, "pointer-events":"none", class:"cd-badge" }));
+      const tx = el("text",{ x:bx, y:by+4, "text-anchor":"middle", fill:"#ffd66b", "font-size":12, "font-weight":700, "pointer-events":"none", style:"font-family:var(--font-ui,inherit)" }); tx.textContent = String(cdN);
+      innerG.appendChild(tx);
     }
     if(highlightKind){
       const ringColor = highlightKind==="climb" ? "var(--gold)" : "var(--coral)";
@@ -4091,7 +4099,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       }));
     }
     if(isShieldedPiece){      // Caparazón del Nautilo: escudo semitransparente con la espiral del caparazón (con grietas en su último turno)
-      const sh = shieldAt(cellKey), cracked = !!(sh && state.turnNumber===sh.t+NAUTILUS_SHIELD_TURNS);
+      const sh = shieldAt(cellKey), cracked = !!(sh && shieldLastTurn(sh));
       vShieldNodes(innerG, x, topY, { cracked, seed:cellKey });
     }
     if(isStunnedPiece){
@@ -4130,10 +4138,6 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   function applyCamera(){
     const camG = document.getElementById("cam");
     if(camG) camG.setAttribute("transform", `translate(${state.view.x},${state.view.y}) scale(${state.view.scale})`);
-    const clampedX = Math.max(-PAN_RANGE, Math.min(PAN_RANGE, Math.round(state.view.x)));
-    const clampedY = Math.max(-PAN_RANGE, Math.min(PAN_RANGE, Math.round(state.view.y)));
-    if(panXSlider && Number(panXSlider.value)!==clampedX) panXSlider.value = clampedX;
-    if(panYSlider && Number(panYSlider.value)!==clampedY) panYSlider.value = clampedY;
   }
 
   // Precise client(px) -> axial(q,r) conversion, independent of DOM hit-testing/paint order.
@@ -4197,22 +4201,22 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       if(mode==="fit" && keys.length===0){ camTo({x:0,y:0,scale:1},300); return; }
       if(keys.length<2){ reefExt=null; return; }
       const b=reefBox(keys), vb=svg.viewBox.baseVal; if(!vb.width) return;
-      const m=HEX_SIZE*1.15, v=state.view;
+      const m=HEX_SIZE*1.15, mb=m+HEX_SIZE*1.3, v=state.view;      // mb: margen inferior extra para los botones de modo
       const grew = !reefExt || b.x0<reefExt.x0-1 || b.x1>reefExt.x1+1 || b.y0<reefExt.y0-1 || b.y1>reefExt.y1+1;
       reefExt=b;
       if(mode==="grow" && !grew) return;
-      const fits = v.x+v.scale*b.x0>=vb.x+m-.5 && v.x+v.scale*b.x1<=vb.x+vb.width-m+.5 && v.y+v.scale*b.y0>=vb.y+m-.5 && v.y+v.scale*b.y1<=vb.y+vb.height-m+.5;
+      const fits = v.x+v.scale*b.x0>=vb.x+m-.5 && v.x+v.scale*b.x1<=vb.x+vb.width-m+.5 && v.y+v.scale*b.y0>=vb.y+m-.5 && v.y+v.scale*b.y1<=vb.y+vb.height-mb+.5;
       if(mode!=="fit" && fits) return;
-      const bw=Math.max(1,b.x1-b.x0), bh=Math.max(1,b.y1-b.y0), fitSc=Math.min((vb.width-2*m)/bw,(vb.height-2*m)/bh);
+      const bw=Math.max(1,b.x1-b.x0), bh=Math.max(1,b.y1-b.y0), fitSc=Math.min((vb.width-2*m)/bw,(vb.height-m-mb)/bh);
       const sc = mode==="fit" ? zclamp(Math.min(1,fitSc)) : zclamp(Math.min(v.scale,fitSc));
-      const cx=(b.x0+b.x1)/2, cy=(b.y0+b.y1)/2, midX=vb.x+vb.width/2, midY=vb.y+vb.height/2;
+      const cx=(b.x0+b.x1)/2, cy=(b.y0+b.y1)/2, midX=vb.x+vb.width/2, midY=vb.y+m+(vb.height-m-mb)/2;
       let nx, ny;
       if(mode==="fit"){ nx=midX-sc*cx; ny=midY-sc*cy; }
       else{
         nx=(v.x+v.scale*cx)-sc*cx; ny=(v.y+v.scale*cy)-sc*cy;                  // el centro del arrecife se queda donde estaba; solo se corrige lo que se sale
         if(nx+sc*b.x0<vb.x+m) nx=vb.x+m-sc*b.x0; else if(nx+sc*b.x1>vb.x+vb.width-m) nx=vb.x+vb.width-m-sc*b.x1;
-        if(ny+sc*b.y0<vb.y+m) ny=vb.y+m-sc*b.y0; else if(ny+sc*b.y1>vb.y+vb.height-m) ny=vb.y+vb.height-m-sc*b.y1;
-        if(bw*sc>vb.width-2*m) nx=midX-sc*cx; if(bh*sc>vb.height-2*m) ny=midY-sc*cy;
+        if(ny+sc*b.y0<vb.y+m) ny=vb.y+m-sc*b.y0; else if(ny+sc*b.y1>vb.y+vb.height-mb) ny=vb.y+vb.height-mb-sc*b.y1;
+        if(bw*sc>vb.width-2*m) nx=midX-sc*cx; if(bh*sc>vb.height-m-mb) ny=midY-sc*cy;
       }
       camTo({x:nx,y:ny,scale:sc},380);
     }catch(e){ console.error("Arrecife: reencuadre", e); }
@@ -4271,8 +4275,6 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   document.getElementById("zoom-out").addEventListener("click", ()=>{ camStop(); state.view.scale = zclamp(state.view.scale*0.87); applyCamera(); });
   document.getElementById("zoom-reset").addEventListener("click", ()=>{ camStop(); if(Object.keys(state.stacks).length>1) autoFrame("fit"); else { state.view = {x:0,y:0,scale:1}; applyCamera(); } });
 
-  panXSlider.addEventListener("input", ()=>{ state.view.x = Number(panXSlider.value); applyCamera(); });
-  panYSlider.addEventListener("input", ()=>{ state.view.y = Number(panYSlider.value); applyCamera(); });
 
   // Ghost preview only for the one cell the mouse is actually over — showing it on every
   // valid destination at once felt cluttered. Mouse-only: touch devices have no "hover".
@@ -5377,7 +5379,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   function nautiloExpiryFx(before){
     const aft = activeShields();
     before.forEach(b=>{ if(!aft.some(a=>a.key===b.key && a.owner===b.owner)){ vCrackSeen.delete(b.key+"|"+b.owner); nautiloShatterFx(b.key); } });
-    aft.forEach(a=>{ if(state.turnNumber===a.t+NAUTILUS_SHIELD_TURNS){ const id = a.key+"|"+a.owner; if(!vCrackSeen.has(id)){ vCrackSeen.add(id); SFX("nautilo_crack"); const P = vxy(a.key); vRing(P.x,P.y,HEX_SIZE*.4,HEX_SIZE*1.3,380,"#fff3e8",1.6); } } });
+    aft.forEach(a=>{ if(shieldLastTurn(a)){ const id = a.key+"|"+a.owner; if(!vCrackSeen.has(id)){ vCrackSeen.add(id); SFX("nautilo_crack"); const P = vxy(a.key); vRing(P.x,P.y,HEX_SIZE*.4,HEX_SIZE*1.3,380,"#fff3e8",1.6); } } });
   }
   // Fin del escudo: «estalla» en fragmentos poligonales en todas direcciones; la pieza queda ilesa pero expuesta
   function nautiloShatterFx(k){
@@ -6197,8 +6199,8 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   const aiLocked = () => !!aiCfg && !state.gameOver && (aiBusy || state.currentPlayer===aiOf());
   const menuOpen = () => document.getElementById("menu-screen").classList.contains("show");
   // Simulación: se juega sobre el mismo `state` y se restaura con un snapshot (nunca se renderiza)
-  const simSave = () => JSON.stringify([state.stacks,state.inventory,state.placements,state.queenPlaced,state.currentPlayer,state.turnNumber,state.stunned,state.eelLast,state.bonus,state.whaleLast,state.nautilus,state.starCd]);
-  const simLoad = j => { const [a,b,c,d,e,f,g,h,i,w,nt,sc]=JSON.parse(j); Object.assign(state,{stacks:a,inventory:b,placements:c,queenPlaced:d,currentPlayer:e,turnNumber:f,stunned:g,eelLast:h,bonus:i||false,whaleLast:w||{white:-10,black:-10},nautilus:nt||{ shields:[], last:{ white:-100, black:-100 } },starCd:sc||{white:0,black:0}}); };
+  const simSave = () => JSON.stringify([state.stacks,state.inventory,state.placements,state.queenPlaced,state.currentPlayer,state.turnNumber,state.stunned,state.eelLast,state.bonus,state.whaleLast,state.nautilus,state.starCd,state.ot]);
+  const simLoad = j => { const [a,b,c,d,e,f,g,h,i,w,nt,sc,ot]=JSON.parse(j); Object.assign(state,{stacks:a,inventory:b,placements:c,queenPlaced:d,currentPlayer:e,turnNumber:f,stunned:g,eelLast:h,bonus:i||false,whaleLast:w||{white:-10,black:-10},nautilus:nt||{ shields:[], last:{ white:-100, black:-100 } },starCd:sc||{white:0,black:0},ot:ot||{white:0,black:0}}); };
   function simApply(a,P){
     const S = state;
     if(a.type==="place"){
@@ -6211,26 +6213,28 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       const wh = S.stacks[a.from][S.stacks[a.from].length-1], tg = S.stacks[a.to]; wh.held = tg.pop(); wh.heldN = -1; if(!tg.length) delete S.stacks[a.to];
     } else if(a.type==="whale-spit"){
       const wh = S.stacks[a.from][S.stacks[a.from].length-1]; S.stacks[a.to] = [wh.held]; delete wh.held; delete wh.heldN;
-      S.whaleLast = S.whaleLast || { white:-10, black:-10 }; S.whaleLast[P] = S.turnNumber;
+      S.whaleLast = S.whaleLast || { white:-10, black:-10 }; S.whaleLast[P] = ownDone(P);
     } else if(a.type==="koi-swap"){
       const x = S.stacks[a.from], y = S.stacks[a.to], px = x.pop(), py = y.pop(); x.push(py); y.push(px);
     } else if(a.type==="star-shuffle"){
       S.starCd = S.starCd || { white:0, black:0 }; S.starCd[P] = STAR_COOLDOWN+1;   /* el reordenamiento aleatorio no se simula */
     } else if(a.type==="nautilus-shield"){
       const N = S.nautilus = S.nautilus || { shields:[], last:{ white:-100, black:-100 } };
-      N.shields = (N.shields||[]).filter(s=>s && s.t+NAUTILUS_SHIELD_TURNS >= S.turnNumber); N.shields.push({ key:a.to, owner:P, t:S.turnNumber });
-      N.last = N.last || {}; N.last[P] = S.turnNumber;
+      N.shields = (N.shields||[]).filter(s=>s && shieldAge(s) <= NAUTILUS_SHIELD_TURNS); N.shields.push({ key:a.to, owner:P, t:ownDone(P) });
+      N.last = N.last || {}; N.last[P] = ownDone(P);
     } else if(a.type==="eel-stun"){
       const tg = eelAbilityTargets(S.stacks, a.from);
-      S.stunned = tg.map(k=>({ key:k, turn:S.turnNumber+1 }));
-      S.eelLast = S.eelLast || { white:-10, black:-10 }; S.eelLast[P] = S.turnNumber;
+      S.stunned = stunFor(otherPlayer(P), tg);
+      S.eelLast = S.eelLast || { white:-10, black:-10 }; S.eelLast[P] = ownDone(P);
     } else {
       const arr = S.stacks[a.from], pc = arr.pop();
       if(!arr.length) delete S.stacks[a.from];
       if(a.type==="climb") S.stacks[a.to].push(pc); else S.stacks[a.to] = [pc];
-      if(a.type==="lobster-ability") S.stunned = [{ key:a.to, turn:S.turnNumber+1 }];
+      if(a.type==="lobster-ability") S.stunned = stunFor(otherPlayer(P), [a.to]);
     }
     if(S.starCd && S.starCd[P]>0) S.starCd[P]--;
+    S.ot = S.ot || { white:0, black:0 }; S.ot[P] = (S.ot[P]||0) + 1;                 // turno propio terminado
+    if(S.stunned){ const rest = stunList().filter(e=>e && e.p!==P); S.stunned = rest.length ? rest : null; }
     S.currentPlayer = otherPlayer(P); S.turnNumber++; S.bonus = false;
   }
   // Todas las jugadas legales de P: colocaciones + movimientos (mismas reglas que el juego)
@@ -6338,7 +6342,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   const LBL = { "btn-menu":["☰"," Menú"], "btn-undo":["↶"," Deshacer"], "btn-help":["?"," Ayuda"], "btn-reset":["⟲"," Reiniciar"], "btn-resign":["⚑"," Abandonar"] }, ORIG = {};
   // El tablero muestra siempre la misma escala (≥0,8 px por unidad); su encuadre se ajusta a la forma del espacio disponible
   function fitBoard(){
-    const a=document.querySelector(".board-area"), W=a&&a.clientWidth, H=a&&Math.max(0,a.clientHeight-(parseFloat(getComputedStyle(a).getPropertyValue("--tb"))||0)); if(!W||!H) return;
+    const a=document.querySelector(".board-area"), W=a&&a.clientWidth, H=a&&a.clientHeight; if(!W||!H) return;
     const p=Math.max(.8,Math.min(W/600,H/440)), w=W/p, h=H/p;
     svg.setAttribute("viewBox",`${-w/2} ${-h/2} ${w} ${h}`); SCH.hx=w/2; SCH.hy=h/2;
   }
@@ -6370,13 +6374,13 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     return {
       stacks: JSON.parse(JSON.stringify(s.stacks)), currentPlayer: s.currentPlayer,
       placements: { white:s.placements.white, black:s.placements.black }, queenPlaced: { white:!!s.queenPlaced.white, black:!!s.queenPlaced.black },
-      inventory: JSON.parse(JSON.stringify(s.inventory)), deck: JSON.parse(JSON.stringify(s.deck)), turnNumber: s.turnNumber, ot: { white:(s.ot||{}).white||0, black:(s.ot||{}).black||0 },
+      inventory: JSON.parse(JSON.stringify(s.inventory)), deck: JSON.parse(JSON.stringify(s.deck)), turnNumber: s.turnNumber, pv: 2, ot: { white:(s.ot||{}).white||0, black:(s.ot||{}).black||0 },
       gameOver: go ? (go.type==="draw" ? { type:"draw" } : (go.resigned ? { type:"win", winner:go.winner, resigned:true } : { type:"win", winner:go.winner })) : null,
-      stunned: (()=>{ const l = (s.stunned ? (Array.isArray(s.stunned) ? s.stunned : [s.stunned]) : []).filter(e=>e && e.turn>=s.turnNumber).map(e=>({ key:e.key, turn:e.turn })).sort((x,y)=>x.key<y.key?-1:x.key>y.key?1:0); return l.length ? l : null; })(),
+      stunned: (()=>{ const l = (s.stunned ? (Array.isArray(s.stunned) ? s.stunned : [s.stunned]) : []).filter(e=>e && (e.p==="white"||e.p==="black") && Number.isInteger(e.turn)).map(e=>({ key:e.key, p:e.p, turn:e.turn })).sort((x,y)=>x.key<y.key?-1:x.key>y.key?1:0); return l.length ? l : null; })(),
       eelLast: { white:(s.eelLast||{}).white, black:(s.eelLast||{}).black },
       whaleLast: { white:(s.whaleLast||{}).white, black:(s.whaleLast||{}).black },
       starCd: { white:(s.starCd||{}).white||0, black:(s.starCd||{}).black||0 },
-      nautilus: (()=>{ const n = s.nautilus || {}, sh = (n.shields||[]).filter(e=>e && e.t+NAUTILUS_SHIELD_TURNS>=s.turnNumber).map(e=>({ key:e.key, owner:e.owner, t:e.t })).sort((x,y)=>x.key<y.key?-1:x.key>y.key?1:0), l = n.last||{};
+      nautilus: (()=>{ const n = s.nautilus || {}, sh = (n.shields||[]).filter(e=>e && (e.owner==="white"||e.owner==="black") && Number.isInteger(e.t) && ((s.ot||{})[e.owner]||0)-e.t<=NAUTILUS_SHIELD_TURNS).map(e=>({ key:e.key, owner:e.owner, t:e.t })).sort((x,y)=>x.key<y.key?-1:x.key>y.key?1:0), l = n.last||{};
         return { shields:sh, last:{ white:Number.isInteger(l.white)?l.white:-100, black:Number.isInteger(l.black)?l.black:-100 } }; })(),
       bonus: typeof s.bonus==="string" ? s.bonus : false,
       bonusQ: (typeof s.bonus==="string" && Array.isArray(s.bonusQ)) ? s.bonusQ.slice() : [],
@@ -6625,7 +6629,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   "use strict";
 
   // ------------------------------------------------------------------ constantes
-  const PROTO_V = 10;   // v9: Estrella de Mar y Nautilo (Legendarias: acciones "star-shuffle" y "nautilus-shield", estado `starCd` y `nautilus`). v7: Deck Builder inmersivo (Raras = 3 especies) y mensaje "dpick" (selección en tiempo real). v6: mazos: el estado lleva `deck` y hay mensaje "deck".
+  const PROTO_V = 11;   // v9: Estrella de Mar y Nautilo (Legendarias: acciones "star-shuffle" y "nautilus-shield", estado `starCd` y `nautilus`). v7: Deck Builder inmersivo (Raras = 3 especies) y mensaje "dpick" (selección en tiempo real). v6: mazos: el estado lleva `deck` y hay mensaje "deck".
   //   // v8: Piraña (movimiento adicional en cadena: el estado lleva `bonusQ` y `pirMoved`).
   //   // v5: Pez Koi (intercambio), Anémona (pasiva) y Almeja (perla, movimiento adicional)
   //   // v2: Anguila (especie nueva, habilidad de aturdir y estado con lista de aturdidas)
@@ -7092,26 +7096,26 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       const raw = Array.isArray(s.stunned) ? s.stunned : [s.stunned];
       if (raw.length > 8) return null;
       const list = [];
-      for (const e of raw) { if (!e || !isKey(e.key) || !isInt(e.turn, 1, 5001)) return null; if (e.turn >= s.turnNumber) list.push({ key: e.key, turn: e.turn }); }
+      for (const e of raw) { if (!e || !isKey(e.key) || !isOwner(e.p) || !isInt(e.turn, 0, 5000)) return null; list.push({ key: e.key, p: e.p, turn: e.turn }); }
       list.sort((x, y) => (x.key < y.key ? -1 : x.key > y.key ? 1 : 0));
       stunned = list.length ? list : null;
     }
     const eelLast = {};
-    for (const o of ["white", "black"]) { const v = s.eelLast && s.eelLast[o] != null ? s.eelLast[o] : -10; if (!isInt(v, -10, 5001)) return null; eelLast[o] = v; }
+    for (const o of ["white", "black"]) { const v = s.eelLast && s.eelLast[o] != null ? s.eelLast[o] : -10; if (!isInt(v, -10, 5000)) return null; eelLast[o] = v; }
     const bonusK = (typeof s.bonus === "string" && isKey(s.bonus)) ? s.bonus : false, keyList = a => Array.isArray(a) ? a.filter(isKey).slice(0, 12) : [];
     const whaleLast = {};
-    for (const o of ["white", "black"]) { const v = s.whaleLast && s.whaleLast[o] != null ? s.whaleLast[o] : -10; if (!isInt(v, -10, 5001)) return null; whaleLast[o] = v; }
+    for (const o of ["white", "black"]) { const v = s.whaleLast && s.whaleLast[o] != null ? s.whaleLast[o] : -10; if (!isInt(v, -10, 5000)) return null; whaleLast[o] = v; }
     const starCd = {};
     for (const o of ["white", "black"]) { const v = s.starCd && s.starCd[o] != null ? s.starCd[o] : 0; if (!isInt(v, 0, 10)) return null; starCd[o] = v; }
     const nautilus = { shields: [], last: { white: -100, black: -100 } };
     if (s.nautilus && typeof s.nautilus === "object") {
       const raw = Array.isArray(s.nautilus.shields) ? s.nautilus.shields : [];
       if (raw.length > 4) return null;
-      for (const e of raw) { if (!e || !isKey(e.key) || !isOwner(e.owner) || !isInt(e.t, 1, 5001)) return null; if (e.t + 2 >= s.turnNumber) nautilus.shields.push({ key: e.key, owner: e.owner, t: e.t }); }
+      for (const e of raw) { if (!e || !isKey(e.key) || !isOwner(e.owner) || !isInt(e.t, 0, 5000)) return null; nautilus.shields.push({ key: e.key, owner: e.owner, t: e.t }); }
       nautilus.shields.sort((x, y) => (x.key < y.key ? -1 : x.key > y.key ? 1 : 0));
-      for (const o of ["white", "black"]) { const v = s.nautilus.last && s.nautilus.last[o] != null ? s.nautilus.last[o] : -100; if (!isInt(v, -100, 5001)) return null; nautilus.last[o] = v; }
+      for (const o of ["white", "black"]) { const v = s.nautilus.last && s.nautilus.last[o] != null ? s.nautilus.last[o] : -100; if (!isInt(v, -100, 5000)) return null; nautilus.last[o] = v; }
     }
-    return { stacks, inventory, deck, currentPlayer: s.currentPlayer, placements, queenPlaced, turnNumber: s.turnNumber, ot: (s.ot && isInt(s.ot.white, 0, 5000) && isInt(s.ot.black, 0, 5000)) ? { white: s.ot.white, black: s.ot.black } : undefined, gameOver, stunned, eelLast, whaleLast, starCd, nautilus, bonus: bonusK, bonusQ: bonusK ? keyList(s.bonusQ) : [], pirMoved: bonusK ? keyList(s.pirMoved) : [] };
+    return { stacks, inventory, deck, currentPlayer: s.currentPlayer, placements, queenPlaced, turnNumber: s.turnNumber, pv: 2, ot: (s.ot && isInt(s.ot.white, 0, 5000) && isInt(s.ot.black, 0, 5000)) ? { white: s.ot.white, black: s.ot.black } : undefined, gameOver, stunned, eelLast, whaleLast, starCd, nautilus, bonus: bonusK, bonusQ: bonusK ? keyList(s.bonusQ) : [], pirMoved: bonusK ? keyList(s.pirMoved) : [] };
   }
   /** Devuelve el mensaje normalizado, {t:"badversion"} si es un hello de otra versión, o null si hay que ignorarlo. */
   function validate(m) {
@@ -8048,7 +8052,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       koi:["Avanza 1 o 2 espacios deslizándose, o usa su habilidad.","«Intercambio»: cambia de lugar con una pieza adyacente (excepto Tortugas Reina)."],
       ballena:["Avanza 1 espacio alrededor del arrecife, o usa su habilidad.","«Tragar» una pieza adyacente (excepto Reinas) y «Escupir» después. Tras escupir espera 2 turnos propios."],
       estrella:["Avanza 1 espacio alrededor del arrecife, o usa su habilidad.","«Remolino»: reordena al azar a todas las piezas adyacentes (excepto Reinas y protegidas). Recarga: 3 turnos propios."],
-      nautilo:["Avanza 1 espacio deslizándose, o usa su habilidad.","«Caparazón ancestral»: protege a una aliada adyacente durante 2 turnos. Recarga: 3 turnos."]
+      nautilo:["Avanza 1 espacio deslizándose, o usa su habilidad.","«Caparazón ancestral»: protege a una aliada adyacente durante 3 turnos propios. La recarga (3 turnos propios) empieza cuando el escudo se rompe."]
     };
     const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
     let m = null, pendingRemote = null;
