@@ -3644,7 +3644,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       const tops = cells.map(k=>state.stacks[k].pop());
       cells.forEach((k,i)=>state.stacks[order[i]].push(tops[i]));
       const map = {}; cells.forEach((k,i)=>map[k]=order[i]);
-      if(state.stunned) state.stunned = stunList().filter(Boolean).map(e=> map[e.key] ? { key:map[e.key], turn:e.turn } : e);   // el aturdimiento acompaña a la pieza
+      if(state.stunned) state.stunned = stunList().filter(Boolean).map(e=> map[e.key] ? Object.assign({}, e, { key:map[e.key] }) : e);   // el aturdimiento acompaña a la pieza
     }
     if(me){ state.starCd = state.starCd || { white:0, black:0 }; state.starCd[me.owner] = STAR_COOLDOWN+1; }   // finishTurn descuenta este mismo turno → quedan 3
     lastActor = null;
