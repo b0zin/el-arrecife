@@ -3963,6 +3963,36 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
   }
   const vBez = (p0, m, p1, n) => { const out = []; for(let i=0;i<n;i++){ const s = i/(n-1), u = 1-s; out.push([u*u*p0.x+2*u*s*m.x+s*s*p1.x, u*u*p0.y+2*u*s*m.y+s*s*p1.y]); } return out; };
   const vPts = pts => pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  // ---- estilo pixel art: formas rasterizadas en una cuadrícula de PX unidades, con 4 tonos (contorno, cuerpo, luz y ventosa) ----
+  function vPixCells(pts, w0, wTip, PX, suck){
+    const m = new Map(), n = pts.length; let cnt = 0;
+    for(let i=0;i<n-1;i++){
+      const a = pts[i], b = pts[i+1], dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx,dy)||1, nx = -dy/L, ny = dx/L, steps = Math.max(1,Math.ceil(L/(PX*.7)));
+      for(let st=0; st<steps; st++){
+        const f = st/steps, s = (i+f)/(n-1), px = a[0]+dx*f, py = a[1]+dy*f, w = (w0*Math.pow(1-s,.8)+wTip)/2;
+        const x0 = Math.floor((px-w)/PX), x1 = Math.floor((px+w)/PX), y0 = Math.floor((py-w)/PX), y1 = Math.floor((py+w)/PX);
+        for(let iy=y0; iy<=y1; iy++) for(let ix=x0; ix<=x1; ix++){
+          const cx = (ix+.5)*PX-px, cy = (iy+.5)*PX-py, d = Math.hypot(cx,cy); if(d>w) continue;
+          const rel = d/w, side = cx*nx+cy*ny, key = (iy+8192)*16384+(ix+8192), o = m.get(key);
+          if(!o || rel<o.rel) m.set(key,{ ix, iy, rel, side, s, w });
+        }
+        if(suck && (++cnt)%9===0 && s>.08 && s<.9){ const ix = Math.floor(px/PX), iy = Math.floor(py/PX), o = m.get((iy+8192)*16384+(ix+8192)); if(o) o.sk = 1; }
+      }
+    }
+    const out = [];
+    m.forEach(o=>{ o.cls = o.sk ? 3 : (o.rel>.7 || o.w<PX*1.3) ? 0 : (o.side<0 && o.rel<.6) ? 2 : 1; out.push(o); });
+    return out;
+  }
+  // celdas → 4 trazados (uno por tono); las celdas contiguas de una fila se funden en un solo rectángulo
+  function vPixD(cells, PX, pred){
+    const rows = [new Map(),new Map(),new Map(),new Map()];
+    for(const c of cells){ if(pred && !pred(c)) continue; const r = rows[c.cls]; let a = r.get(c.iy); if(!a){ a = []; r.set(c.iy,a); } a.push(c.ix); }
+    return rows.map(r=>{ let d = ""; r.forEach((a,iy)=>{ a.sort((p,q)=>p-q); let st = a[0], prev = st;
+      for(let i=1;i<=a.length;i++){ const v = a[i]; if(v===prev+1 || v===prev){ prev = v; continue; } const wd = (prev-st+1)*PX; d += "M"+st*PX+" "+iy*PX+"h"+wd+"v"+PX+"h-"+wd+"z"; st = v; prev = v; } }); return d; });
+  }
+  const vPixTent = (pts, w0, wTip, PX, suck) => vPixD(vPixCells(pts,w0,wTip,PX,suck), PX);
+  const vPixEls = (par, fills) => fills.map(f=>{ const e = el("path",{ fill:f, "shape-rendering":"crispEdges", class:"fx-overlay" }); par.appendChild(e); return e; });
+  const KR_SW = ["#3d0808","#8a1c1c","#cf5a5a","#e8b3b3"], KR_VC = ["#1a0303","#6e1414","#b04040","#e0a0a0"];
   // Oculta TODAS las capas de la pila de una casilla (vHold solo oculta la de arriba); vUnhide las devuelve.
   const vHoldAll = k => { vHold(k); const cam = vCam(); if(cam) cam.querySelectorAll('image[data-hitkey="'+k+'"]').forEach(i=>{ if(!i.classList.contains("fx-overlay") && !i.classList.contains("anim-sprite")) i.style.opacity = "0"; }); };
 
@@ -3981,10 +4011,11 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
         const grp = () => { const e = el("g",{ class:"fx-overlay" }); g.appendChild(e); return e; };
         const sites = [a0, b0];
         // 1) agua oscura: el hexágono se ennegrece y una espiral de tinta gira encima
-        const spiral = (C,k) => { let d = ""; const th = Math.PI*1.7; for(let i=0;i<=26;i++){ const a = th*i/26+k*vTAU/3, r = 3+(HS*.86-3)*(i/26); d += (i?" L":"M")+(C.x+Math.cos(a)*r).toFixed(1)+" "+(C.y+Math.sin(a)*r).toFixed(1); } return d; };
+        const spiralPts = k => { const out = [], th = Math.PI*1.7; for(let i=0;i<=26;i++){ const a = th*i/26+k*vTAU/3, r = 3+(HS*.86-3)*(i/26); out.push([Math.cos(a)*r, Math.sin(a)*r]); } return out; };
+        const armPts = [0,1,2].map(spiralPts);
         const pools = sites.map(C=>{
-          const gp = grp(), hex = el("polygon",{ points:hexCorners(C.x,C.y,HS), fill:INK, opacity:0, class:"fx-overlay" }); gp.appendChild(hex);
-          const arms = [0,1,2].map(k=>{ const dk = el("path",{ d:spiral(C,k), fill:"none", stroke:"#0a1830", "stroke-width":2.6, "stroke-linecap":"round", opacity:0, class:"fx-overlay" }), lt = el("path",{ d:spiral(C,k+.5), fill:"none", stroke:"#2b4f86", "stroke-width":1, "stroke-linecap":"round", opacity:0, class:"fx-overlay" }); gp.appendChild(dk); gp.appendChild(lt); return [dk,lt]; });
+          const gp = grp(), hex = el("polygon",{ points:hexCorners(C.x,C.y,HS), fill:INK, opacity:0, "shape-rendering":"crispEdges", class:"fx-overlay" }); gp.appendChild(hex);
+          const arms = [0,1,2].map(()=>vPixEls(gp,["#050a18","#0a1830","#2b4f86","#2b4f86"]));
           return { C, hex, arms };
         });
         // 2) piezas que se hunden (kraken en a0, objetivo en b0)
@@ -3993,34 +4024,28 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
         const tentG = grp(), NT = 5;
         const tents = sites.map(C=>Array.from({length:NT},(_,i)=>{
           const th = i/NT*vTAU+rn()*.5, R0 = HS*.78, P0 = { x:C.x+Math.cos(th)*R0, y:C.y+Math.sin(th)*R0*.62+HS*.15 };
-          const o = { th, P0, C, H:HS*(2.3+rn()*.7), ph:rn()*vTAU, d:i*.015, poly:el("polygon",{ fill:KC, stroke:KD, "stroke-width":1, "stroke-linejoin":"round", opacity:0, class:"fx-overlay" }), hi:el("polyline",{ fill:"none", stroke:KH, "stroke-width":1.1, "stroke-linecap":"round", opacity:0, class:"fx-overlay" }) };
-          tentG.appendChild(o.poly); tentG.appendChild(o.hi); return o;
+          const o = { th, P0, C, H:HS*(2.3+rn()*.7), ph:rn()*vTAU, d:i*.015, ps:vPixEls(tentG,KR_SW) };
+          return o;
         }));
         const upTent = (o,tt) => {
           const C = o.C, gr = easeOutCubic(tm(.12+o.d,.34+o.d)), w = easeInOutSine(tm(.30,.40)), z = easeInCubic(tm(.38,.47));
-          if(gr<=0 || z>=1){ o.poly.setAttribute("opacity",0); o.hi.setAttribute("opacity",0); return; }
+          if(gr<=0 || z>=1){ o.ps.forEach(e=>e.setAttribute("d","")); return; }
           const P0 = { x:lerp(o.P0.x,C.x,z), y:lerp(o.P0.y,C.y,z) };
           const tipUp = { x:o.P0.x+Math.cos(o.th)*HS*.3, y:o.P0.y-o.H }, tipWr = { x:C.x+Math.cos(o.th)*HS*.12, y:C.y-HS*.15 };
           let tip = { x:lerp(tipUp.x,tipWr.x,w), y:lerp(tipUp.y,tipWr.y,w) }; tip = { x:lerp(tip.x,C.x,z), y:lerp(tip.y,C.y,z) }; tip = { x:lerp(P0.x,tip.x,gr), y:lerp(P0.y,tip.y,gr) };
           const sw = Math.sin(tt*7+o.ph)*HS*.38*(1-w*.85)*gr, dx = tip.x-P0.x, dy = tip.y-P0.y, l = Math.hypot(dx,dy)||1;
           const M = { x:(P0.x+tip.x)/2-dy/l*sw, y:(P0.y+tip.y)/2+dx/l*sw }, pts = vBez(P0,M,tip,12);
-          o.poly.setAttribute("points", vTentPoly(pts, HS*.46*(1-.5*z))); o.hi.setAttribute("points", vPts(pts));
-          o.poly.setAttribute("opacity",1); o.hi.setAttribute("opacity",.55);
+          const pp = vPixTent(pts, HS*.46*(1-.5*z), 2, 2, true); o.ps.forEach((e,i)=>e.setAttribute("d",pp[i]));
         };
         // 4) las piezas emergen intercambiadas (kraken en b0, objetivo en a0), cada una envuelta en tentáculos (aturdimiento)
         const mkSite = (C, piece) => {
-          const wb = grp(), gh = vGhostPiece(g, C, piece), wf = grp(), quads = [];
+          const wb = grp(), gh = vGhostPiece(g, C, piece), wf = grp(), cells = [], pb = vPixEls(wb,KR_SW), pf = vPixEls(wf,KR_SW);
           for(let j=0;j<2;j++){
-            const NSEG = 22, pts = [], ph = [];
-            for(let i=0;i<=NSEG;i++){ const s = i/NSEG, f = s*2.3*Math.PI+j*Math.PI; pts.push([C.x+Math.cos(f)*HS*.62*(1-.1*s), C.y+HS*.5-s*HS*1.0+Math.sin(f)*HS*.2]); ph.push(f); }
-            for(let i=0;i<NSEG;i++){
-              const a = pts[i], b = pts[i+1], dx = b[0]-a[0], dy = b[1]-a[1], l = Math.hypot(dx,dy)||1, nx = -dy/l, ny = dx/l;
-              const w0 = (HS*.3*(1-i/NSEG*.75)+.8)/2, w1 = (HS*.3*(1-(i+1)/NSEG*.75)+.8)/2;
-              const poly = el("polygon",{ points:vPts([[a[0]+nx*w0,a[1]+ny*w0],[b[0]+nx*w1,b[1]+ny*w1],[b[0]-nx*w1,b[1]-ny*w1],[a[0]-nx*w0,a[1]-ny*w0]]), fill:(j?KC:"#9a2424"), stroke:KD, "stroke-width":.8, "stroke-linejoin":"round", opacity:0, class:"fx-overlay" });
-              (Math.sin((ph[i]+ph[i+1])/2)>0 ? wf : wb).appendChild(poly); quads.push({ poly, r:i/NSEG });
-            }
+            const NSEG = 22, pts = [];
+            for(let i=0;i<=NSEG;i++){ const sg = i/NSEG, f = sg*2.3*Math.PI+j*Math.PI; pts.push([C.x+Math.cos(f)*HS*.62*(1-.1*sg), C.y+HS*.5-sg*HS*1.0+Math.sin(f)*HS*.2]); }
+            vPixCells(pts, HS*.3, 1, 2, true).forEach(c=>{ c.f = Math.sin(c.s*2.3*Math.PI+j*Math.PI)>0; cells.push(c); });   // delante/detrás de la pieza según la vuelta del enrollado
           }
-          gh.im.setAttribute("opacity",0); return { C, gh, quads };
+          gh.im.setAttribute("opacity",0); return { C, gh, cells, pb, pf, key:"" };
         };
         const eK = mkSite(b0, pk), eT = mkSite(a0, pt);
         let fired = false, grabbed = false, wrapped = false;
@@ -4028,7 +4053,10 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
           T = t; const tt = t*ms/1000;
           // pozo oscuro (aparece con el remolino, se disipa al emerger las piezas)
           const pl = easeInOutSine(tm(0,.2))*(1-easeInOutSine(tm(.60,.74)));
-          pools.forEach(p=>{ p.hex.setAttribute("opacity",(.82*pl).toFixed(3)); p.arms.forEach(([dk,lt],k)=>{ const rot = "rotate("+(tt*300+k*40).toFixed(1)+" "+p.C.x+" "+p.C.y+")"; dk.setAttribute("transform",rot); lt.setAttribute("transform",rot); dk.setAttribute("opacity",(.9*pl).toFixed(3)); lt.setAttribute("opacity",(.6*pl).toFixed(3)); }); });
+          pools.forEach(p=>{ p.hex.setAttribute("opacity",(.82*pl).toFixed(3));
+            p.arms.forEach((els,k)=>{ if(pl<.03){ els.forEach(e=>e.setAttribute("d","")); return; }
+              const a = tt*5+k*.7, cs = Math.cos(a), sn = Math.sin(a), pts = armPts[k].map(q=>[p.C.x+q[0]*cs-q[1]*sn, p.C.y+q[0]*sn+q[1]*cs]), dd = vPixTent(pts,0,5,2);
+              els.forEach((e,i)=>{ e.setAttribute("d",dd[i]); e.setAttribute("opacity",(.9*pl).toFixed(3)); }); }); });
           // las dos piezas tiemblan y se hunden arrastradas por los tentáculos
           const sink = easeInCubic(tm(.32,.46)), trem = Math.sin(tt*60)*1.2*tm(.12,.32);
           [[dK,a0],[dT,b0]].forEach(([d,C],i)=>{ d.set(trem*(i?-1:1), sink*HS*.35, 1-.85*sink, null, sink*35*(i?-1:1)); d.im.setAttribute("opacity", t<.46 ? (1-sink*sink).toFixed(3) : 0); });
@@ -4042,7 +4070,8 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
             const wob = Math.sin(tt*30+i*2)*1.4*tm(.74,.9);
             s.gh.set(0,-jump,pop,null,wob); s.gh.im.setAttribute("opacity", e<=0 ? 0 : Math.min(1,e*8).toFixed(3));
             const gw = easeOutCubic(tm(.70,.82)), fade = 1-tm(.94,1);
-            s.quads.forEach(q=>q.poly.setAttribute("opacity", q.r<gw ? fade.toFixed(3) : 0));
+            const kk = gw.toFixed(2); if(kk!==s.key){ s.key = kk; const db = vPixD(s.cells,2,c=>!c.f && c.s<gw), df = vPixD(s.cells,2,c=>c.f && c.s<gw); s.pb.forEach((e,n)=>e.setAttribute("d",db[n])); s.pf.forEach((e,n)=>e.setAttribute("d",df[n])); }
+            s.pb.concat(s.pf).forEach(e=>e.setAttribute("opacity",fade.toFixed(3)));
           });
           if(!wrapped && t>=.72){ wrapped = true; SFX("kraken_wrap"); SFX("stun"); }
         };
@@ -6281,29 +6310,38 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
         let T = 0; const tm = (lo,hi) => clamp01((T-lo)/(hi-lo));
         // agua → negro absoluto
         const dark = mk("rect",{ x:-3000, y:-3000, width:6000, height:6000, fill:"#000000", opacity:0 });
-        const pool = mk("circle",{ cx:QC.x, cy:QC.y, r:HS*2.3, fill:"#7cc8f5", filter:"url(#vglow)", opacity:0 });
-        // ojo gigante (detrás de la Reina)
-        const defs = el("defs",{}), rg = el("radialGradient",{ id:"vkeye", cx:.5, cy:.5, r:.5 });
-        [[0,"#fffbd0"],[.45,"#ffd21a"],[1,"#ff9a00"]].forEach(st=>rg.appendChild(el("stop",{ offset:st[0], "stop-color":st[1] })));
-        const clip = el("clipPath",{ id:"vkclip" }), clipPath = el("path",{ d:"" }); clip.appendChild(clipPath); defs.appendChild(rg); defs.appendChild(clip); g.appendChild(defs);
-        const eyeG = mk("g",{ opacity:0 });
-        const EW = Math.min((box.x1-box.x0)*.36, HS*9), EH = EW*.5;       // tamaño del ojo en proporción a la pantalla
-        const eyeGlow = mk("circle",{ cx:QC.x, cy:QC.y, r:EW, fill:"#ffb300", filter:"url(#vglow)", opacity:0 }, eyeG);
-        const eyeShape = mk("path",{ d:"", fill:"url(#vkeye)", stroke:"#ffcf33", "stroke-width":3 }, eyeG);
-        const inner = mk("g",{ "clip-path":"url(#vkclip)" }, eyeG);
-        mk("circle",{ cx:QC.x, cy:QC.y, r:EH*.7, fill:"none", stroke:"#e07b00", "stroke-width":EH*.1, opacity:.8 }, inner);
-        const pupil = mk("ellipse",{ cx:QC.x, cy:QC.y, rx:EH*.14, ry:EH*.6, fill:"#000" }, inner);
-        mk("ellipse",{ cx:QC.x-EH*.25, cy:QC.y-EH*.25, rx:EH*.08, ry:EH*.14, fill:"#ffffff", opacity:.55 }, inner);
+        const pool = mk("g",{ opacity:0, "shape-rendering":"crispEdges" }); [2.3,1.7,1.1].forEach(r=>mk("circle",{ cx:QC.x, cy:QC.y, r:HS*r, fill:"#7cc8f5", opacity:.5 },pool));   // brillo escalonado (sin desenfoque)
+         const EW = Math.min((box.x1-box.x0)*.36, HS*9), EH = EW*.5, PXE = Math.max(2,Math.round(EW/26));       // ojo en proporción a la pantalla, en píxeles gruesos
+        const eyeG = mk("g",{ opacity:0, "shape-rendering":"crispEdges" });
+        const eyeP = ["#6b2c00","#e07b00","#ffd21a","#fff3a0","#000000","#ffffff"].map(f=>{ const e = el("path",{ fill:f, class:"fx-overlay" }); eyeG.appendChild(e); return e; });
+        const drawEye = (open, dil) => {
+          const hh = EH*open, ds = ["","","","","",""], ix0 = Math.floor((QC.x-EW)/PXE), ix1 = Math.floor((QC.x+EW)/PXE), iy0 = Math.floor((QC.y-hh)/PXE), iy1 = Math.floor((QC.y+hh)/PXE);
+          for(let iy=iy0; iy<=iy1; iy++){
+            let run = -1, cur = -1, runStart = 0;
+            for(let ix=ix0; ix<=ix1+1; ix++){
+              let cl = -1;
+              if(ix<=ix1){ const dx = (ix+.5)*PXE-QC.x, dy = (iy+.5)*PXE-QC.y, u = dx/EW, h = hh*(1-u*u);
+                if(Math.abs(dy)<=h){ const d = Math.hypot(dx,dy)/EH;
+                  if(Math.abs(dy)>h-PXE*1.1) cl = 0;
+                  else if(Math.abs(dx)<EH*dil && Math.abs(dy)<EH*.62*Math.sqrt(Math.max(0,1-Math.pow(dx/(EH*dil),2)))) cl = 4;
+                  else if(Math.abs(dx+EH*.25)<EH*.09 && Math.abs(dy+EH*.25)<EH*.14) cl = 5;
+                  else if(d>.6 && d<.76) cl = 1;
+                  else if(d<.6) cl = ((ix+iy)&1 && d>.45) ? 2 : 3;
+                  else cl = ((ix+iy)&1 && d<.9) ? 3 : 2; } }
+              if(cl!==cur){ if(cur>=0) ds[cur] += "M"+runStart*PXE+" "+iy*PXE+"h"+(ix-runStart)*PXE+"v"+PXE+"h-"+(ix-runStart)*PXE+"z"; cur = cl; runStart = ix; }
+            }
+          }
+          eyeP.forEach((e,n)=>e.setAttribute("d",ds[n]));
+        };
         // Reina y Kraken (por encima de la oscuridad)
-        const lit = mk("circle",{ cx:QC.x, cy:QC.y, r:HS*1.3, fill:"#bfe6ff", filter:"url(#vglow)", opacity:0 });
+        const lit = mk("g",{ opacity:0, "shape-rendering":"crispEdges" }); [1.4,.9].forEach(r=>mk("circle",{ cx:QC.x, cy:QC.y, r:HS*r, fill:"#bfe6ff", opacity:.6 },lit));
         const qg = qTop ? vGhostPiece(g, QC, qTop) : null, kg = vGhostPiece(g, C0, kp);
         // 12 tentáculos gigantes: nacen en los bordes de la pantalla y envuelven a la Reina
         const NT = 12, ux0 = QC.x-C0.x, uy0 = QC.y-C0.y, ul = Math.hypot(ux0,uy0)||1;
         const tents = Array.from({length:NT},(_,i)=>{
           const th = -Math.PI/2+i/NT*vTAU+(rn()-.5)*.25, B = rayEdge(th), dir = i%2 ? 1 : -1;
           const o = { th, B, dir, ph:rn()*vTAU, d:i*.012, sw:(i%2?1:-1)*(.12+rn()*.1),
-            poly:mk("polygon",{ fill:KC, stroke:KD, "stroke-width":1.4, "stroke-linejoin":"round", opacity:0 }), hi:mk("polyline",{ fill:"none", stroke:KH, "stroke-width":1.6, "stroke-linecap":"round", opacity:0 }),
-            dots:Array.from({length:4},()=>mk("circle",{ r:HS*.11, fill:"#e8b3b3", opacity:0 })) };
+            ps:vPixEls(g,KR_VC) };
           return o;
         });
         const NS = 26, S0 = .8;
@@ -6326,19 +6364,15 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
           const tight = 1-.42*easeInOutSine(tm(.46,.60))-.22*easeInOutSine(tm(.76,.86)), retr = easeInCubic(tm(.88,.97));
           tents.forEach(o=>{
             const gr = easeInOutSine(clamp01((t-.20-o.d)/(.32))), vis = gr>0 && retr<1;
-            if(!vis){ o.poly.setAttribute("opacity",0); o.hi.setAttribute("opacity",0); o.dots.forEach(d=>d.setAttribute("opacity",0)); return; }
+            if(!vis){ o.ps.forEach(e=>e.setAttribute("d","")); return; }
             const pts = [], sMax = Math.max(.04,gr*(1-retr*.96));          // al final la punta retrocede arrastrando todo hacia el borde
             for(let i=0;i<NS;i++) pts.push(pathAt(o,sMax*i/(NS-1),tight,tt));
             const w0 = HS*1.0*(1-.5*retr);
-            o.poly.setAttribute("points", vTentPoly(pts,w0,HS*.22)); o.hi.setAttribute("points", vPts(pts)); o.poly.setAttribute("opacity",1); o.hi.setAttribute("opacity",.5);
-            o.dots.forEach((d,k)=>{ const p = pts[Math.min(NS-1,Math.round((.12+k*.2)*(NS-1)))]; d.setAttribute("cx",p[0].toFixed(1)); d.setAttribute("cy",p[1].toFixed(1)); d.setAttribute("opacity",.55); });
+            const pp = vPixTent(pts,w0,HS*.22,3,true); o.ps.forEach((e,n)=>e.setAttribute("d",pp[n]));
           });
           // ojo amarillo
           const open = easeInOutCubic(tm(.60,.76))*(1-easeInOutCubic(tm(.94,.995)));
-          if(open>.01){
-            const hh = EH*open, w2 = EW, d = "M"+(QC.x-w2)+" "+QC.y+" Q"+QC.x+" "+(QC.y-2*hh)+" "+(QC.x+w2)+" "+QC.y+" Q"+QC.x+" "+(QC.y+2*hh)+" "+(QC.x-w2)+" "+QC.y+"Z";
-            eyeShape.setAttribute("d",d); clipPath.setAttribute("d",d); eyeG.setAttribute("opacity",1);
-            const pulse = .5+.5*Math.sin(tt*5); pupil.setAttribute("rx",EH*(.12+.06*easeInOutSine(tm(.76,.86))+.01*pulse)); eyeGlow.setAttribute("r",EW*(.7+.25*open+.03*pulse)); eyeGlow.setAttribute("opacity",(.55*open).toFixed(3));
+          if(open>.01){ drawEye(open, .12+.05*easeInOutSine(tm(.76,.86))); eyeG.setAttribute("opacity",1);
           } else eyeG.setAttribute("opacity",0);
           if(!eyed && t>=.62){ eyed = true; vShake(vBoard(),5,600); }
           // la Reina tiembla y, al final, se hunde arrastrada a la oscuridad total
