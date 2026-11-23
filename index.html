@@ -1327,7 +1327,7 @@ html.gfx-nofloat #help-modal .lb-head h2,html.gfx-nofloat #m-title{animation:non
 :root{ --pu:2px; }
 @media (min-width:1200px) and (min-height:760px){ :root{ --pu:3px; } }
 @media (max-width:520px), (orientation:landscape) and (max-height:560px){ :root{ --pu:1.5px; } }
-.icon-btn,.btn-ghost,.mghost,.zoom-btn,.chip,.btn-primary,.status-card,.tray,.modal,.sum-card,.gameover-banner,.toast{
+.icon-btn,.btn-ghost,.mghost,.zoom-btn,.chip,.btn-primary,.status-card,.tray,.dks-panel,.modal,.sum-card,.gameover-banner,.toast{
   --ink:#EAF3F6; --ink-dim:#BAC2D2; --panel:#46454f; --panel-line:#1d1b27; --bg-mid-2:#3a3945; --hint-bg:rgba(20,18,31,.92);
   color:var(--ink); background:none; border-style:solid; border-color:transparent; border-radius:0;
   border-width:calc(5*var(--pu)) calc(5*var(--pu)) calc(6*var(--pu));
@@ -1420,18 +1420,18 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
 #dks-banner.go{ animation:dksBan 1.9s ease-out; }
 @keyframes dksBan{ 0%{ opacity:0; transform:translate(-50%,16px) scale(.9); } 12%{ opacity:1; transform:translate(-50%,0) scale(1.04); } 20%{ transform:translate(-50%,0) scale(1); } 80%{ opacity:1; } 100%{ opacity:0; transform:translate(-50%,-10px); } }
 
-.dks-panel{ position:absolute; top:calc(64px + env(safe-area-inset-top,0px)); bottom:12px; width:232px; display:flex; flex-direction:column; gap:7px; padding:9px 9px 8px; background:rgba(8,28,52,.9); border:2px solid var(--panel-line); border-radius:14px; overflow-y:auto; pointer-events:auto; transition:opacity .4s ease, transform .4s ease, border-color .2s; box-shadow:0 6px 18px rgba(0,0,0,.35); }
+.dks-panel{ position:absolute; top:calc(64px + env(safe-area-inset-top,0px)); bottom:12px; width:248px; display:flex; flex-direction:column; gap:7px; padding:calc(4*var(--pu)) calc(3*var(--pu)); overflow-y:auto; pointer-events:auto; transition:opacity .4s ease, transform .4s ease, border-color .2s; }
 .dks-panel[data-o="white"]{ left:max(16px, calc((100vw - 1400px)/2 + 16px)); }
 .dks-panel[data-o="black"]{ right:max(16px, calc((100vw - 1400px)/2 + 16px)); }
-.dks-panel.me{ border-color:var(--teal); }
-.dks-panel.ready{ border-color:#7CE08A; }
+.dks-panel.me{ filter:drop-shadow(var(--pu) 0 0 var(--teal)) drop-shadow(calc(-1*var(--pu)) 0 0 var(--teal)) drop-shadow(0 var(--pu) 0 var(--teal)) drop-shadow(0 calc(-1*var(--pu)) 0 var(--teal)); }
+.dks-panel.ready{ filter:drop-shadow(var(--pu) 0 0 #7CE08A) drop-shadow(calc(-1*var(--pu)) 0 0 #7CE08A) drop-shadow(0 var(--pu) 0 #7CE08A) drop-shadow(0 calc(-1*var(--pu)) 0 #7CE08A); }
 #deck-scene.collecting .dks-panel{ opacity:0; transform:translateY(10px); pointer-events:none; }
 .dks-head{ display:flex; align-items:center; gap:7px; font-size:9px; }
 .dks-head strong{ font-weight:400; font-size:10px; }
-.dks-tag{ margin-left:auto; font-style:normal; font-size:6px; background:var(--coral); color:#2A0E06; border-radius:4px; padding:3px 4px; }
+.dks-tag{ margin-left:auto; font-style:normal; font-size:6px; background:var(--coral); color:#2A0E06; border-radius:0; padding:3px 4px; }
 .dks-tag.rv{ background:var(--panel-line); color:var(--ink); }
 .dks-steps{ display:flex; gap:4px; }
-.dks-steps .st{ flex:1; text-align:center; font-size:7px; padding:4px 0; border:1px solid var(--panel-line); color:var(--ink-dim); border-radius:6px; background:rgba(255,255,255,.04); }
+.dks-steps .st{ flex:1; text-align:center; font-size:7px; padding:4px 0; border:var(--pu) solid var(--panel-line); color:var(--ink-dim); border-radius:0; background:rgba(255,255,255,.04); }
 .dks-steps .st.on{ border-color:var(--c); color:var(--c); background:rgba(255,255,255,.1); }
 .dks-steps .st.done{ background:var(--c); color:#0B2036; border-color:var(--c); }
 .dks-steps .st.off{ opacity:.35; }
@@ -1442,11 +1442,11 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
 .dks-cards.fresh .dks-card{ animation:dksCard .38s ease-out backwards; }
 .dks-cards.fresh .dks-card:nth-child(2){ animation-delay:.05s; } .dks-cards.fresh .dks-card:nth-child(3){ animation-delay:.1s; } .dks-cards.fresh .dks-card:nth-child(4){ animation-delay:.15s; } .dks-cards.fresh .dks-card:nth-child(5){ animation-delay:.2s; }
 @keyframes dksCard{ from{ opacity:0; transform:translateY(14px) scale(.85); } to{ opacity:1; transform:none; } }
-.dks-card{ position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 3px 6px; background:rgba(255,255,255,.06); border:2px solid var(--panel-line); box-shadow:0 0 9px 0 var(--g,transparent); border-radius:10px; color:var(--ink); -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; font-family:var(--font-body); font-size:7px; line-height:1.3; text-align:center; cursor:pointer; transition:transform .12s, border-color .12s, background .12s; }
+.dks-card{ position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 3px 6px; background:rgba(20,18,31,.38); border:var(--pu) solid var(--panel-line); box-shadow:inset 0 var(--pu) 0 rgba(0,0,0,.28), inset 0 calc(-1*var(--pu)) 0 rgba(255,255,255,.08), 0 0 9px 0 var(--g,transparent); border-radius:0; text-shadow:calc(.5*var(--pu)) calc(.5*var(--pu)) 0 rgba(0,0,0,.5); color:var(--ink); -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; font-family:var(--font-body); font-size:7px; line-height:1.3; text-align:center; cursor:pointer; transition:transform .12s, border-color .12s, background .12s; }
 .dks-card img{ width:40px; height:35px; image-rendering:pixelated; image-rendering:crisp-edges; }
 .dks-card i{ font-style:normal; color:var(--ink-dim); font-size:7px; }
 .dks-card:not(.off):hover{ transform:translateY(-3px); border-color:var(--teal); background:rgba(111,198,232,.14); }
-.dks-card.on{ border-color:var(--c); background:rgba(255,255,255,.14); box-shadow:0 0 12px 1px var(--g,var(--c)); }
+.dks-card.on{ border-color:var(--c); background:rgba(255,255,255,.14); box-shadow:inset 0 var(--pu) 0 rgba(0,0,0,.2), 0 0 12px 1px var(--g,var(--c)); }
 .dks-card.on::after{ content:"✓"; position:absolute; top:2px; right:4px; color:var(--c); font-size:9px; }
 .dks-phase .pips{ color:var(--c); }
 .dk-ring{ pointer-events:none; }
@@ -1481,6 +1481,79 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
 @media (max-aspect-ratio: 1/1){ #dks-tip{ font-size:8px; max-width:min(200px,calc(100vw - 16px)); padding:6px 8px; } #dks-tip b{ font-size:9px; } }
 #dks-tip[hidden]{ display:none; } #dks-tip b{ font-size:12px; color:var(--gold); } #dks-tip em{ font-style:normal; color:var(--teal); font-weight:700; margin-right:4px; }
 @media (prefers-reduced-motion:reduce){ .dks-cards.fresh .dks-card, #dks-banner.go{ animation:none; } }
+</style>
+<style>
+/* ===== Pulido de interfaz: bandeja, ventanas emergentes y botones superiores ===== */
+:root{ --stone-hi:#9391a6; }
+
+/* Bandeja: iconos más grandes, copias como puntos y nombres con más aire */
+.piece-btn{ gap:calc(1.5*var(--pu)); padding:calc(1.5*var(--pu)) calc(1*var(--pu)); }
+.piece-btn img{ width:52px; height:46px; }
+.piece-btn .count{ display:flex; align-items:center; justify-content:center; gap:calc(1.5*var(--pu)); min-height:calc(4*var(--pu)); font-size:0; line-height:0; }
+.pip{ position:relative; display:block; flex:none; box-sizing:border-box; width:calc(4.5*var(--pu)); height:calc(4.5*var(--pu)); background:rgba(255,255,255,.28); image-rendering:pixelated;
+  clip-path:polygon(16.67% 0,83.33% 0,83.33% 16.67%,100% 16.67%,100% 83.33%,83.33% 83.33%,83.33% 100%,16.67% 100%,16.67% 83.33%,0 83.33%,0 16.67%,16.67% 16.67%); }
+.pip::after{ content:""; position:absolute; inset:16.67%; background:rgba(20,18,31,.7);
+  clip-path:polygon(25% 0,75% 0,75% 25%,100% 25%,100% 75%,75% 75%,75% 100%,25% 100%,25% 75%,0 75%,0 25%,25% 25%); }
+.pip.on{ background:#1d1b27; }
+.pip.on::after{ background:linear-gradient(135deg,#D9F4FF 0 34%,#7FD4FF 34% 70%,#2E8FD0 70%); }
+.piece-btn .name{ line-height:1.45; padding:0 calc(1*var(--pu)); text-wrap:balance; overflow-wrap:anywhere; }
+@media (orientation: portrait), (orientation: landscape) and (max-height: 560px), (orientation: landscape) and (max-width: 760px){
+  .piece-btn img{ width:min(40px,calc(100% - 4px)); height:auto; aspect-ratio:34/30; }
+}
+@media (orientation: landscape) and (max-height: 560px), (orientation: landscape) and (max-width: 760px){
+  .piece-btn img{ width:min(46px,calc(100% - 3px)); }
+}
+
+/* Ventanas emergentes: sombra paralela pixelada y borde exterior más claro para que "salten" al frente */
+.modal{ outline:var(--pu) solid var(--stone-hi); outline-offset:0; box-shadow:calc(2*var(--pu)) calc(2*var(--pu)) 0 rgba(0,0,0,.6), calc(4*var(--pu)) calc(4*var(--pu)) 0 rgba(0,0,0,.35); }
+
+/* Pantalla horizontal: tablero más angosto y las dos bandejas una al lado de la otra, sin scroll */
+@media (orientation: landscape) and (min-width: 761px) and (min-height: 561px){
+  .sidebar{ flex:0 0 calc(2*190px + 10px); }
+  /* Las bandejas ocupan todo el alto disponible junto al tablero (sin hueco vacío debajo) */
+  .trays{ grid-template-columns:1fr 1fr; grid-template-rows:minmax(0,1fr); align-content:stretch; gap:10px; }
+  .tray{ justify-content:flex-start; min-height:0; }
+  .tray-grid{ flex:1 1 auto; min-height:0; grid-auto-rows:minmax(0,1fr); align-items:stretch; }
+  .tray-grid .piece-btn{ justify-content:center; min-height:0; }
+  .piece-btn img{ width:min(calc(100% - 4px), clamp(52px, 7.2vh, 78px)); height:auto; aspect-ratio:34/30; }
+}
+
+/* Botones de la barra superior: más margen interno */
+.topbar-actions .icon-btn{ padding:calc(1.5*var(--pu) + 3px) calc(1*var(--pu) + 3px); }
+
+/* Indicador de bandeja: hexágono pixel art en lugar del círculo */
+.owner-chip{ position:relative; flex:none; box-sizing:border-box; width:18px; height:20px; border:0 !important; border-radius:0; background:#000 !important; image-rendering:pixelated;
+  clip-path:polygon(37.5% 0,62.5% 0,62.5% 12.5%,87.5% 12.5%,87.5% 25%,100% 25%,100% 75%,87.5% 75%,87.5% 87.5%,62.5% 87.5%,62.5% 100%,37.5% 100%,37.5% 87.5%,12.5% 87.5%,12.5% 75%,0 75%,0 25%,12.5% 25%,12.5% 12.5%,37.5% 12.5%); }
+.owner-chip::after{ content:""; position:absolute; inset:2px; clip-path:inherit; }
+.owner-chip.white{ background:#8a8065 !important; }
+.owner-chip.white::after{ background:var(--white-owner); }
+.owner-chip.black{ background:#000 !important; }
+.owner-chip.black::after{ background:var(--black-owner); box-shadow:inset 0 0 0 1px #3a3a3a; }
+
+/* Indicador de turno: mismo hexágono pixel art */
+.turn-dot{ position:relative; box-sizing:border-box; width:18px; height:20px; border:0 !important; border-radius:0; background:#000 !important; image-rendering:pixelated;
+  clip-path:polygon(37.5% 0,62.5% 0,62.5% 12.5%,87.5% 12.5%,87.5% 25%,100% 25%,100% 75%,87.5% 75%,87.5% 87.5%,62.5% 87.5%,62.5% 100%,37.5% 100%,37.5% 87.5%,12.5% 87.5%,12.5% 75%,0 75%,0 25%,12.5% 25%,12.5% 12.5%,37.5% 12.5%); }
+.turn-dot::after{ content:""; position:absolute; inset:2px; clip-path:inherit; }
+.turn-dot.white{ background:#8a8065 !important; }
+.turn-dot.white::after{ background:var(--white-owner); }
+.turn-dot.black{ background:#000 !important; }
+.turn-dot.black::after{ background:var(--black-owner); box-shadow:inset 0 0 0 1px #3a3a3a; }
+
+/* Móvil: las bandejas muestran solo el hexágono, sin el texto "Blancas" / "Negras" */
+@media (orientation: portrait), (orientation: landscape) and (max-height: 560px), (orientation: landscape) and (max-width: 760px){
+  .tray-head strong{ display:none; }
+  .tray-head{ justify-content:center; }
+}
+
+/* Iconos del tablero (+, −, inicio): pixel art con el mismo grosor (1 px de cuadrícula) */
+.zoom-btn .zi{ display:block; width:calc(11*var(--pu)); height:calc(11*var(--pu)); image-rendering:pixelated; pointer-events:none; }
+
+/* Botones de modo no disponibles este turno: visibles pero oscurecidos */
+#move-toolbar .chip:disabled, #move-toolbar .chip.is-off{ opacity:.4; filter:grayscale(.7) brightness(.65); cursor:not-allowed; transform:none; }
+#move-toolbar .chip:disabled:hover, #move-toolbar .chip:disabled:active{ filter:grayscale(.7) brightness(.65); transform:none; }
+
+/* Deck Builder: sin línea de subtítulo vacía */
+.dks-title p:empty{ display:none; }
 </style>
 </head>
 <body>
@@ -1541,9 +1614,9 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
         </div>
         <div class="move-toolbar" id="move-toolbar"></div>
                 <div class="board-controls">
-          <button class="zoom-btn" id="zoom-in" title="Acercar">+</button>
-          <button class="zoom-btn" id="zoom-out" title="Alejar">−</button>
-          <button class="zoom-btn" id="zoom-reset" title="Centrar">⌂</button>
+          <button class="zoom-btn" id="zoom-in" title="Acercar"><svg class="zi" viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path d="M1 5h9v1h-9zM5 1h1v9h-1z" fill="currentColor"/></svg></button>
+          <button class="zoom-btn" id="zoom-out" title="Alejar"><svg class="zi" viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path d="M1 5h9v1h-9z" fill="currentColor"/></svg></button>
+          <button class="zoom-btn" id="zoom-reset" title="Centrar"><svg class="zi" viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path d="M5 0h1v1h-1zM4 1h1v1h-1zM6 1h1v1h-1zM3 2h1v1h-1zM7 2h1v1h-1zM2 3h1v1h-1zM8 3h1v1h-1zM1 4h1v1h-1zM9 4h1v1h-1zM0 5h1v1h-1zM10 5h1v1h-1zM2 5h1v6h-1zM8 5h1v6h-1zM2 10h7v1h-7zM4 7h3v1h-3zM4 8h1v2h-1zM6 8h1v2h-1z" fill="currentColor"/></svg></button>
         </div>
       </div>
     </div>
@@ -5291,7 +5364,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
           if(cat==="whaleMove") opts.whaleMove.forEach((path,k)=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"relocate", from:state.selectedCell, to:k, path, category:"whaleMove"}); addGroundGhost(k); });
           if(cat==="whaleSwallow") opts.whaleSwallow.forEach(k=>{ occupiedHighlights.set(k,"ability"); ACTION_MAP.set(k,{type:"whale-swallow", from:state.selectedCell, to:k}); });
           if(cat==="whaleSpit") opts.whaleSpit.forEach(k=>{
-            emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"whale-spit", from:state.selectedCell, to:k});
+            emptyHighlights.set(k,"ability"); ACTION_MAP.set(k,{type:"whale-spit", from:state.selectedCell, to:k});
             const held = movedPiece && movedPiece.held; if(held) moveGhosts.push({ at:k, species:held.species, owner:held.owner, pearl:altOf(held), stackDepth:0 });
           });
           if(cat==="shrimpMove") opts.shrimpMove.forEach((path,k)=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"relocate", from:state.selectedCell, to:k, path, category:"shrimpMove"}); addGroundGhost(k); });
@@ -5317,11 +5390,11 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
           });
           if(cat==="hermitMove") opts.hermitMove.forEach((path,k)=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"relocate", from:state.selectedCell, to:k, path, category:"hermitMove"}); addGroundGhost(k); });
           if(cat==="hermitRide") opts.hermitRide.forEach((path,k)=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"hermit-ride", from:state.selectedCell, to:k}); addGroundGhost(k); });
-          if(cat==="hermitLeave") opts.hermitLeave.forEach(k=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"hermit-leave", from:state.selectedCell, to:k}); addGroundGhost(k); });
-          if(cat==="hermitAbandon") opts.hermitAbandon.forEach(k=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"hermit-abandon", from:state.selectedCell, to:k}); addGroundGhost(k); });
+          if(cat==="hermitLeave") opts.hermitLeave.forEach(k=>{ emptyHighlights.set(k,"ability"); ACTION_MAP.set(k,{type:"hermit-leave", from:state.selectedCell, to:k}); addGroundGhost(k); });
+          if(cat==="hermitAbandon") opts.hermitAbandon.forEach(k=>{ emptyHighlights.set(k,"ability"); ACTION_MAP.set(k,{type:"hermit-abandon", from:state.selectedCell, to:k}); addGroundGhost(k); });
           if(cat==="walrusMove") opts.walrusMove.forEach((path,k)=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"relocate", from:state.selectedCell, to:k, path, category:"walrusMove"}); addGroundGhost(k); });
-          if(cat==="walrusAbility") opts.walrusAbility.forEach(k=>{ emptyHighlights.set(k,"move"); ACTION_MAP.set(k,{type:"walrus-rock", from:state.selectedCell, to:k}); });
-          if(cat==="hermitOccupy") opts.hermitOccupy.forEach(k=>{ occupiedHighlights.set(k,"climb"); ACTION_MAP.set(k,{type:"hermit-occupy", from:state.selectedCell, to:k}); addClimbGhost(k); });
+          if(cat==="walrusAbility") opts.walrusAbility.forEach(k=>{ emptyHighlights.set(k,"ability"); ACTION_MAP.set(k,{type:"walrus-rock", from:state.selectedCell, to:k}); });
+          if(cat==="hermitOccupy") opts.hermitOccupy.forEach(k=>{ occupiedHighlights.set(k,"ability"); ACTION_MAP.set(k,{type:"hermit-occupy", from:state.selectedCell, to:k}); addClimbGhost(k); });
           if(cat==="swordThrust"){
             const pivots = [...new Set(opts.swordThrust.map(o=>o.pivot))];
             let pv = (swordPivot && swordPivot.from===state.selectedCell && pivots.includes(swordPivot.pivot)) ? swordPivot.pivot : null;
@@ -5377,7 +5450,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       const {x,y}=axialToPixel(q,r);
       g.appendChild(el("polygon",{
         points:hexCorners(x,y,HEX_SIZE-1.5),
-        fill:"rgba(61,255,140,0.30)", stroke:"var(--move)", "stroke-width":3, "stroke-dasharray":"5,4",
+        fill: kind==="ability" ? "rgba(251,140,0,0.30)" : "rgba(61,255,140,0.30)", stroke: kind==="ability" ? "var(--coral)" : "var(--move)", "stroke-width":3, "stroke-dasharray":"5,4",
         "data-hitkey":k, cursor:"pointer"
       }));
     });
@@ -5490,8 +5563,8 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       const ringColor = highlightKind==="climb" ? "var(--gold)" : "var(--coral)";
       innerG.appendChild(el("polygon",{
         points:hexCorners(x, topY, HEX_SIZE+2),
-        fill:"none", stroke:ringColor, "stroke-width":3.5,
-        "stroke-dasharray": highlightKind==="ability" ? "5,3" : "none",
+        fill:"none", stroke:ringColor, "stroke-width": highlightKind==="ability" ? 3 : 3.5,
+        "stroke-dasharray": highlightKind==="ability" ? "5,4" : "none",
         "data-hitkey":cellKey, cursor:"pointer"
       }));
     }
@@ -5814,6 +5887,21 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     try{ const tp = !state.gameOver && state.selectedCell && topOf(state.selectedCell);
       if(tp && window.ArrecifeLibro && window.ArrecifeLibro.has(tp.species)){ const hb = document.createElement("button"); hb.className = "chip"; hb.textContent = "?"; hb.title = "Ver en el libro"; hb.addEventListener("click", ()=>window.ArrecifeLibro.open(tp.species)); moveToolbar.appendChild(hb); } }catch(e){}
   }
+  // Todas las opciones propias de cada especie con «Moverse» + habilidad (para mostrar siempre sus botones)
+  const FULL_MODES = {
+    langosta:["lobsterMove","lobsterAbility"], anguila:["eelMove","eelAbility"], koi:["koiMove","koiAbility"], camaron:["shrimpMove","shrimpAbility"],
+    ballena:["whaleMove","whaleSwallow","whaleSpit"], estrella:["starMove","starAbility"], nautilo:["nautilusMove","nautilusAbility"],
+    globo:["globoMove","globoAbility"], kraken:["krakenMove","krakenAbility"], megalodon:["megalodonMove","megalodonAbility"],
+    morsa:["walrusMove","walrusAbility"], linterna:["lanternMove","lanternAbility"]
+  };
+  function fullModes(cell){
+    const top = topOf(cell); if(!top) return null;
+    if(top.species==="ermitano"){
+      if(top.naked===true) return hermitOccupied(state.stacks, cell) ? ["hermitRide","hermitLeave"] : ["hermitMove","hermitOccupy"];
+      return ["hermitMove","hermitAbandon"];
+    }
+    return FULL_MODES[top.species] || null;
+  }
   function updateToolbar0(){
     moveToolbar.innerHTML = "";
     if(state.gameOver) return;
@@ -5830,12 +5918,18 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       moveToolbar.appendChild(cb); return;
     }
     const available = uiModes(state.selectedCell, opts);
-    if(available.length<=1) return;
-    available.forEach(cat=>{
+    // Fichas con varias opciones (moverse + habilidad): se muestran siempre todos los botones;
+    // los que no se pueden usar este turno quedan oscurecidos y deshabilitados.
+    const full = fullModes(state.selectedCell);
+    const list = (full && full.length>1) ? full.concat(available.filter(c=>!full.includes(c))) : available;
+    if(list.length<=1) return;
+    list.forEach(cat=>{
+      const on = available.includes(cat);
       const btn = document.createElement("button");
-      btn.className = "chip" + (state.moveSubMode===cat ? " active":"");
+      btn.className = "chip" + (on && state.moveSubMode===cat ? " active":"") + (on ? "" : " is-off");
       btn.textContent = CATEGORY_LABEL[cat];
-      btn.addEventListener("click", ()=>{ state.moveSubMode = cat; render(); });
+      if(!on){ btn.disabled = true; btn.setAttribute("aria-disabled","true"); btn.title = "No disponible este turno"; }
+      else btn.addEventListener("click", ()=>{ state.moveSubMode = cat; render(); });
       moveToolbar.appendChild(btn);
     });
   }
@@ -5847,22 +5941,37 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
     buildTray(trayBlack, "black");
   }
 
+  // Copias disponibles como puntos: lleno = queda en la bandeja, vacío = ya colocada
+  function pipsHTML(n, max){ n = n|0; max = Math.max(max|0, n, 1); let h = ""; for(let i=0;i<max;i++) h += '<i class="pip' + (i < n ? ' on' : '') + '"></i>'; return h; }
+  function setCount(el, n){ if(!el) return; n = n|0; const max = Math.max(+el.dataset.max || 0, n, 1); el.dataset.max = max; el.setAttribute("aria-label", n + " de " + max + " disponibles"); el.innerHTML = pipsHTML(n, max); }
+
+  // Nombres más cortos solo en las bandejas (para que quepan en una línea)
+  const TRAY_NAMES = { "Tortuga Reina":"Tortuga", "Erizo de Mar":"Erizo", "Caballito de Mar":"Caballito", "Cangrejo Ermitaño":"Ermitaño", "Pez Linterna":"Linterna", "Estrella de Mar":"Estrella" };
+  // Orden de la bandeja: Tortuga, Comunes, Raras, Épicas, Legendarias (según las categorías del Deck Builder)
+  function trayOrder(){
+    try{
+      const rank = {}; let i = 0;
+      ArrecifeDeck.categories().forEach(c => c.pool.forEach(k => { if(!(k in rank)) rank[k] = i++; }));
+      return SPECIES_ORDER.slice().sort((a,b) => (a in rank ? rank[a] : 999) - (b in rank ? rank[b] : 999));
+    }catch(e){ return SPECIES_ORDER; }
+  }
   function buildTray(container, player){
     container.innerHTML="";
     const forced = mustPlaceQueenNow(player);
     const trayInteractive = player===state.currentPlayer;
-    SPECIES_ORDER.forEach(spKey=>{
+    trayOrder().forEach(spKey=>{
       if(state.deck && state.deck[player] && !(state.deck[player][spKey] > 0)) return;   // no está en el mazo de este jugador
       const sp = SPECIES[spKey];
       const remaining = state.inventory[player][spKey];
+      const cap = Math.max(remaining, (state.deck && state.deck[player] && state.deck[player][spKey]) || 0, 1);
       const btn = document.createElement("button");
       btn.className = "piece-btn";
       const disabled = !trayInteractive || remaining<=0 || (forced && spKey!=="tortuga") || !!state.bonus || !!state.gameOver || isAnimating || netLocked();
       btn.disabled = disabled;
       if(state.selected===spKey && trayInteractive) btn.classList.add("selected");
       btn.innerHTML = `<img class="pixel-sprite" src="${pieceSprite(spKey, player)}" alt="${sp.name}" width="34" height="30">
-        <span class="count">${remaining}</span>
-        <span class="name">${sp.name}</span>`;
+        <span class="count" role="img" aria-label="${remaining} de ${cap} disponibles" data-max="${cap}">${pipsHTML(remaining, cap)}</span>
+        <span class="name">${TRAY_NAMES[sp.name] || sp.name}</span>`;
       btn.addEventListener("click", ()=>{
         if(disabled) return;
         state.selectedCell = null;
@@ -9164,7 +9273,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       }
       function reapply(){
         gather();
-        ["white","black"].forEach(p=>{ for(const s in btns[p]){ const n = landed[p][s] || 0, b = btns[p][s], c = b.querySelector(".count"); if(c) c.textContent = n; b.style.opacity = n ? "" : "0"; b.disabled = true; } });
+        ["white","black"].forEach(p=>{ for(const s in btns[p]){ const n = landed[p][s] || 0, b = btns[p][s], c = b.querySelector(".count"); if(c) setCount(c, n); b.style.opacity = n ? "" : "0"; b.disabled = true; } });
       }
       dkReapply = reapply; render();
       for(const k in vHid) delete vHid[k]; items.forEach(it=>{ vHid[it.k] = true; }); vApplyHides();
@@ -9180,7 +9289,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:default; }
       }
       function land(it, b){
         landed[it.owner][it.sp] = (landed[it.owner][it.sp] || 0) + 1; me.n++; me.left--;
-        const c = b && b.querySelector(".count"); if(c) c.textContent = landed[it.owner][it.sp];
+        const c = b && b.querySelector(".count"); if(c) setCount(c, landed[it.owner][it.sp]);
         if(b){ b.style.opacity = ""; if(b.animate) b.animate([{ transform:"scale(1)" },{ transform:"scale(1.22) translateY(-3px)", offset:.4 },{ transform:"scale(1)" }], { duration:260, easing:"ease-out" }); }
         SFX("tray_pop", { i:me.n });
         if(me.left <= 0) setTimeout(finish, 520);
@@ -11003,7 +11112,7 @@ megalodon:["Avanza 1 espacio deslizándose, o usa su habilidad.","«Mandíbula A
     if(cfg.mode === "ai"){
       DUI.open({ mode:"ai", human:cfg.human, title:"Arma tu arrecife", sub:"Juegas con las " + (cfg.human === "white" ? "Blancas" : "Negras") + ". La IA arma el suyo a la vez.", onConfirm:begin });
     } else {
-      DUI.open({ mode:"local", title:"Arma los arrecifes", sub:"Cada jugador elige desde su panel, en el orden que quiera.", onConfirm:begin });
+      DUI.open({ mode:"local", title:"Arma los arrecifes", onConfirm:begin });
     }
   }
 
@@ -11012,7 +11121,7 @@ megalodon:["Avanza 1 espacio deslizándose, o usa su habilidad.","«Mandíbula A
     const DUI = window.ArrecifeDeckUI, st = G.peek(), ai = st && st.ai; if(!DUI) return;
     const begin = decks => { G.newGame(ai ? { human:ai.human, level:ai.level } : null, decks); DUI.close({ start:true }); };
     if(ai) DUI.open({ mode:"ai", human:ai.human, back:true, title:"Cambia tu mazo", sub:"Juegas con las " + (ai.human === "white" ? "Blancas" : "Negras") + ". La IA arma el suyo a la vez.", onConfirm:begin });
-    else DUI.open({ mode:"local", back:true, title:"Cambia los mazos", sub:"Cada jugador elige desde su panel, en el orden que quiera.", onConfirm:begin });
+    else DUI.open({ mode:"local", back:true, title:"Cambia los mazos", onConfirm:begin });
   }
   ["gameover-newdeck","sum-newdeck"].forEach(id => $(id).addEventListener("click", changeDeck));
 
