@@ -1347,6 +1347,10 @@ html.gfx-nofloat #help-modal .lb-head h2,html.gfx-nofloat #m-title{animation:non
 .icon-btn:active,.btn-ghost:active,.mghost:active,.btn-primary:active,.chip:active,.zoom-btn:active{ transform:translateY(var(--pu)); filter:brightness(.92); }
 .btn-primary,.chip.active{ border-image-source:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAMCAYAAAC0qUeeAAAAn0lEQVR4nH2RsQ2DMBBF3zECokOCKrPQMkUkBkhH6Y4BLDEFLbNQGcmdxQqkiR3bivOrO/n9u6+zkKmp+9vX7jISv0kOqkOFfn7MiUFycDv3AI/dkBiqEgiwnTvqUCGalMBYfkNVJH6oAtCrZuyG4lS96i9cMsQgfK7R1P3dvloApudEPADALhZ3GUlO5w2xPJjEcJcRu9giGGLE+vfdbyJeUFBm7raJAAAAAElFTkSuQmCC); color:#fff; text-shadow:calc(.5*var(--pu)) calc(.5*var(--pu)) 0 rgba(8,70,28,.85); }
 .chip{ border-radius:0; font-weight:400; }
+/* base propia de los botones (arte 18x18, 9 trozos: 4/4/6/4 px). Se pinta a la escala --pu; el border-width de arriba no cambia, así los botones conservan su tamaño. */
+.icon-btn,.btn-ghost,.mghost,.zoom-btn,.chip:not(.active){
+  border-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAlElEQVR4AeyQuw2AMAxEHdahZdDskTnS0TIP+BlCoLAU90E54d89S17k/52aRqTj9/uCzlKKRKQIlupPpIEMsu+HRMRSpRgM0AvRYuixtMEAhcze8AR5l+n1eaN+Cy+yG+WcZdtWb8at48HLgIEIKNCICA9eBCjVWomFRkSYHm8CRP7CSEbVIMw3ELHBaI5KTUll7wIAAP//SIk1bQAAAAZJREFUAwCWppwZSiOZEgAAAABJRU5ErkJggg==) 4 4 6 4 fill / calc(4*var(--pu)) calc(4*var(--pu)) calc(6*var(--pu)) calc(4*var(--pu)) stretch;
+}
 .zoom-btn{ width:calc(18*var(--pu)); height:calc(18*var(--pu)); padding:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-body); font-size:calc(5*var(--pu)); }
 .topbar-actions .icon-btn{ border-radius:0; }
 /* paneles */
@@ -1359,6 +1363,15 @@ html.gfx-nofloat #help-modal .lb-head h2,html.gfx-nofloat #m-title{animation:non
 .tray.active{ filter:drop-shadow(var(--pu) 0 0 var(--teal)) drop-shadow(calc(-1*var(--pu)) 0 0 var(--teal)) drop-shadow(0 var(--pu) 0 var(--teal)) drop-shadow(0 calc(-1*var(--pu)) 0 var(--teal)); }
 .status-card.warn{ filter:drop-shadow(var(--pu) 0 0 var(--gold)) drop-shadow(calc(-1*var(--pu)) 0 0 var(--gold)) drop-shadow(0 var(--pu) 0 var(--gold)) drop-shadow(0 calc(-1*var(--pu)) 0 var(--gold)); }
 .status-card.warn .value{ color:var(--gold); }
+/* bandejas de piezas, tarjeta de turno y de regla: misma base propia 18x18 que los botones */
+.tray,.status-card{
+  border-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAgUlEQVR4nO3UsQ0DMQiF4Z8o27il8xzew6OwB3O4uzbzOE04Xe7SYKW8VyEkPiEkW/jOJBe5FMB095TSWtuNgKa7s22vFKRadkxWkTP2WJr+kRu6ob9BZoZqSQ+rFswMgGc0zYzeewoKBA6Pttaa3ghgjAEgcSP5NJaQ40aR5Y/tDacHJfZ2UAdqAAAAAElFTkSuQmCC) 4 4 6 4 fill / calc(4*var(--pu)) calc(4*var(--pu)) calc(6*var(--pu)) calc(4*var(--pu)) stretch;
+}
+/* bandeja activa: piedra con un leve tono celeste, color fijo (sin halo ni animación) */
+.tray.active{
+  filter:none;
+  border-image-source:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAmUlEQVR4nGNkQAX/GUgDjBgMBgaG/1suPSPJFB89KbgZLMiGHNq4niSDtlx6xuCjJ/WfgYGBkZFcQ2DAzj+QwUdPioGJLN1YwKhBowZRzaC6vCwGO/9AkjXb+Qcy1OVlMTAwIPIaQ11eFkPTpGkkGQQzhIEBkfv/GzkEkOwiBgYGhnMHNjAwMDAwwsKIESpAliHILoIBsgs2AFi3J+xal3v2AAAAAElFTkSuQmCC);
+}
 /* casillas de pieza: huecos tallados en la piedra */
 .piece-btn{ background:rgba(20,18,31,.38); border:var(--pu) solid #1d1b27; border-radius:0; box-shadow:inset 0 var(--pu) 0 rgba(0,0,0,.28), inset 0 calc(-1*var(--pu)) 0 rgba(255,255,255,.08); color:var(--ink); text-shadow:calc(.5*var(--pu)) calc(.5*var(--pu)) 0 rgba(0,0,0,.5); }
 .piece-btn .name{ color:var(--ink-dim); }
@@ -10639,18 +10652,15 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:var(--cur-
   function gfx(k,d){ try{ var v=window.GFX&&GFX.get(k); return v==null?d:v; }catch(e){ return d; } }
   function pf(){ try{ return window.GFX?GFX.pf():1; }catch(e){ return 1; } }
 
-  /* ---------- sprites de peces (definidos por código; miran a la derecha) ---------- */
-  var ROUND=["....fff.....","...dbbbbbd..","..dbbbbbbbd.","..bbbbbbweb.","..dlllllllld","...dllllld..","....ff......"];
-  var ROUNDT=[[[1,2],[1,3],[1,4],[0,1],[0,5]],[[1,3],[0,2],[0,3],[0,4]]];
+  /* ---------- sprites de peces del menú (PNG propios, 2 fotogramas c/u; se voltean al cargar porque el dibujo original mira a la izquierda) ---------- */
   var DEF={
-    silver:{ b:["...ddd....","..dbbbbbd.","..bbbbbebb","..dlllllld","...ddd...."], t:[[[1,1],[1,2],[1,3],[0,0],[0,4]],[[1,2],[0,1],[0,2],[0,3]]], pal:{b:"#a9c3d1",l:"#e3f0f6",d:"#5d7a8f",e:"#14212d",f:"#8fb0c4"}, sp:[15,23], an:6 },
-    orange:{ b:ROUND, t:ROUNDT, pal:{b:"#f6962b",l:"#ffd986",d:"#b24f17",e:"#1a1210",w:"#ffffff",f:"#ff6b2c"}, sp:[10,16], an:4.5 },
-    blue:{ b:ROUND, t:ROUNDT, pal:{b:"#3f9be0",l:"#a6dcff",d:"#1c5a96",e:"#0e1a2b",w:"#ffffff",f:"#2a6fb6"}, sp:[12,18], an:4.5 }
+    silver:{ w:11, h:9,  fr:["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJCAYAAADkZNYtAAAAqElEQVR4nGNgwAGElJz+45RAlhRScvqfXHr+P7oGJiElp/9R2ZMYorInYZiGLsb07t4+xmVT8xgYGBgYAoN7GYSUnP4HBvcycEqwYjiJEWYyDHx/8ZshqEGDgYGBgSFW15th8eWtDOsabjCsX1uMavL3F78ZOCVYGbbPuAvXHKvrDbcFxWSYJhj/+4vfDAwMDAzr1xYzvLu3jxFnaGz9+v0/ujhOgE0RAIyETTABLkUhAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJCAYAAADkZNYtAAAAt0lEQVR4nHWQoQ6CUBSGP5gEKolMsvASVJLa2EhGmIXZeQEKm5vdzYYkZuMVDBIskk00RzBc02Uil9PO+c/5/v0HZspyPDGnTRa3+5v4P9ClqCIFUT5yWFiOJ4IoB+B82AmA1SbDtI2RU9fWmiabIMrpXx8A1ukSgND1Od0rLumDskjQf8mmbWDaBtfjc6CGrj+4TMhlkSCPpVNZJHRtrWE5noizRsRZM4S0HE9U714og6uGqu98AfZYUCV0hC+AAAAAAElFTkSuQmCC"], sp:[15,23], an:6,   scB:[1],   scF:[1,2] },   // pez azul: cardumen al fondo
+    orange:{ w:11, h:9,  fr:["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJCAYAAADkZNYtAAAArElEQVR4nH2QPQrCQBCFv03pAXIA2c4zrAimswtYaOlJcoU0lrYW1paCmDTeIWyVQk2XQCDVWK1sfvDBMMzw3pvHwABGKzFayXA/gtFKpMtFulz+inyiq7qMeoLAF7yfRwCaKqGpEgCu93U/mtFKXo+9uF6X0c/VvxAAZIWo7eHM5bRjNv/Q2pDWhgAsF2ac1zm7vDaNxaZxL3fPeQqb1Y2sEAWgpr7iz44I8AXwr3WAjB/SIwAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJCAYAAADkZNYtAAAAo0lEQVR4nGNgQAO2Koz/bVUY/6OLYwBbFcb//38e+f//55H/eDUhK4ThT09cUDQwwhSunhfJwMDAwCBunsXw+XUDikHeDnuxu/XFoaj/n564wE1FtoEF3WQupVcM3+6JwQ2x07Zl2HrAGeEMmAYGBgaGQ1cPMzAwMDDcn9HHwMDAwCAS/InB22Evw+E7/xmZYIoP3/kP14juXpgchgL04EI2BADBqV4BLnqP7AAAAABJRU5ErkJggg=="], sp:[10,16], an:4.5, scB:[1,2], scF:[2,3] },   // pez amarillo
+    blue:  { w:16, h:14, fr:["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAABmElEQVR4nH2TP0hCURTGf88cHBpysEh4UA2ODlFBPB3cKpBaSlrUIYgiAteohhLXIMKpod4S/RmKkNpcFMGiobHBhAeFOtTgYNNtyHt7T62znPvv+/jO+c7V+CM8RlzY962iqfV65/4LMLWYYmSon2qtychQPxcgehG5/wPZ89LGDtVakzIIO4kiaBVNrQyCNok+m0Vv3zlzykHiltLlgQTXP2NKWcSnk29YRHw69QWL8uWvahfAmbGpeiDBEZ/eBc43LKa3n7HW/MwHhoUq4ePtiTNjkwN/H/XPry6QHRydqThccLWKprb+WgAg+fgAQL5h/fRlNcdc1k1rNUfEp1NKBwFY2TvleDfBfGBYuDxGXGRHQwCcTEwyOHAOQKZwjdc/Tih4RXSmohR0hnJhuXjYXqUIJ022QjEyXHF7P/ZzHIJSOki0UOF4N6EINLsLHiMupN/hpOlwQobsw8reKTcv75pjqjxGXNiHKZw0HWDrbp1qrYk3O8fNy7sGoPUCXxztq8lzjPPRPlKtKsFOINeynE75vT7UN55gx1UWhNIwAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAABpklEQVR4nH2TL0gDURzHPzcWFgwapigc6IJxQXQgd4a1KQwtKivngiCKCKuiBhWrILJkmFeGf4IyxLWFeQhTDEbDHBw4tgUNC2d6Br3nnU5feX8/39/3vd/vKfzRQpohvHPHMpVO54J/AbHZDIN9XdQabQb7ujgF0Uko+B/k7edWN6k12lRAeEWkgGOZSgUEXyLqZBb1a8/fZ3wiPgeAhJtv83ItHlYptWziYZXmjE3l7Pt8IKQZwnt/F46H1V9wqWUzvvGIvTzA9HC/kA7y2hopELHZDM2391+QF04mqj7HAYDXlwfy2hrp+zsASi37812WrpjKBnGWroiHVW53owAsbh9ztLXA9HC/CDiWqaw83wCQGx2jt/sEgL2bC3oGRtCj5yQTVengZwuENENkh3QAKmf7lHMGvd0nrOsz6NFzCsUIhWIEQDo42lqQAjILKetAZqGcM5hIm6zr86D7IxaKEZKJKovbx1w+1RXFzYBjmUpIM4S3mCbSpg+2r1eoNdr0ZKe4fKorALKivPDp4Y6sPF85H+7gBnM5n4A7dt38fLBOH+oDldXER3c9KuwAAAAASUVORK5CYII="], sp:[12,18], an:4.5, scB:[1],   scF:[1,2] }    // pez turquesa grande
   };
-  Object.keys(DEF).forEach(function(k){ var d=DEF[k], h=d.b.length, w=d.b[0].length; d.w=w; d.h=h;
-    d.spr=[0,1].map(function(f){ var c=document.createElement("canvas"); c.width=w; c.height=h; var g=c.getContext("2d");
-      d.b.forEach(function(row,y){ for(var x=0;x<w;x++){ var ch=row.charAt(x); if(ch!=="."){ g.fillStyle=d.pal[ch]; g.fillRect(x,y,1,1); } } });
-      g.fillStyle=d.pal.f; d.t[f].forEach(function(p){ g.fillRect(p[0],p[1],1,1); }); return c; }); });
+  Object.keys(DEF).forEach(function(k){ var d=DEF[k];
+    d.spr=d.fr.map(function(u){ var c=document.createElement("canvas"); c.width=d.w; c.height=d.h; var im=new Image();
+      im.onload=function(){ c.getContext("2d").drawImage(im,0,0); }; im.src=u; return c; }); });
 
   /* ---------- sprites de burbujas (anillo de píxeles + brillo) ---------- */
   var BUB={};
@@ -10697,7 +10707,7 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:var(--cur-
       var d=DEF.silver, y=rnd(H*.12,H*.75), sp=rnd(d.sp[0],d.sp[1]), x0=pre?rnd(W*.1,W*.8):(dir>0?-24:W+24);
       for(var i=0;i<n;i++) addFish(d,dir,y+rnd(-7,7),1,false,sp*rnd(.93,1.07),x0+rnd(-14,14));
     } else {                                                 // pez suelto: detrás o delante de la interfaz
-      var d2=Math.random()<.55?DEF.orange:DEF.blue, front=Math.random()<.45, sc=front?pick([2,3]):pick([1,2]), w=d2.w*sc;
+      var d2=Math.random()<.55?DEF.orange:DEF.blue, front=Math.random()<.45, sc=pick(front?d2.scF:d2.scB), w=d2.w*sc;
       addFish(d2,dir,rnd(H*.12,H*.72),sc,front,rnd(d2.sp[0],d2.sp[1])*(front?1.5:1),pre?rnd(W*.1,W*.8):(dir>0?-w-4:W+4));
     }
   }
@@ -10814,10 +10824,12 @@ html.deck-mode.deck-collecting .piece-btn:disabled{ opacity:1; cursor:var(--cur-
   }
   function wigglePiece(im){
     if(im.__wig){ try{ im.__wig.cancel(); }catch(err){} }
-    var dir=Math.random()<.5?-1:1;
-    var kf=[{rotate:"0deg",scale:"1"},{rotate:(-4*dir)+"deg",scale:"1.05"},{rotate:(3*dir)+"deg",scale:".98"},{rotate:(-1.5*dir)+"deg",scale:"1.01"},{rotate:"0deg",scale:"1"}];
-    try{ im.__wig=im.animate(kf,{ duration:420, easing:"ease-out" }); }catch(err){}
-    var r=im.getBoundingClientRect(); splash((r.left+r.width/2)/S,(r.top+r.height/2)/S,false);
+    var dir=Math.random()<.5?-1:1, r=im.getBoundingClientRect(), w=Math.max(r.width,16);
+    // movimiento siempre leve: el giro y el zoom se limitan según el tamaño de la pieza (el borde se mueve ~1,5 px como máximo)
+    var a=Math.min(1.6, Math.atan(1.5/(w/2))*57.3), z=Math.min(.02, 1.2/w);
+    var kf=[{rotate:"0deg",scale:"1"},{rotate:(-a*dir)+"deg",scale:String(1+z)},{rotate:(a*.7*dir)+"deg",scale:String(1-z*.4)},{rotate:(-a*.3*dir)+"deg",scale:String(1+z*.2)},{rotate:"0deg",scale:"1"}];
+    try{ im.__wig=im.animate(kf,{ duration:380, easing:"ease-out" }); }catch(err){}
+ splash((r.left+r.width/2)/S,(r.top+r.height/2)/S,false);
     sfx("tray_pop",{ i:Math.floor(Math.random()*8) });
   }
   function scareFish(f){
